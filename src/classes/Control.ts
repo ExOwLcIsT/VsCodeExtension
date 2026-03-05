@@ -1,8 +1,6 @@
 import { Param } from "./Param";
 
-
-
-
+/**Blanks to convert WPF Controls into HTML elements*/
 const blanks: { [id: string]: string } = {
   Border: `div class="border"`,
 
@@ -105,29 +103,34 @@ const blanks: { [id: string]: string } = {
 
   InkPresenter: "",
 };
-
-
-
-
-
-
-
+/**Class for WPF Control converted into HTML element */
 export class Control {
   tagName: string = "div";
   isPair: boolean;
   children: Control[] = [];
   params: Param[] = [];
+  innerText: string = "";
   constructor(tagName: string, isPair: boolean) {
     this.tagName = tagName;
     this.isPair = isPair;
   }
+  /**Stringify Control and it`s children elements */
   show(): string {
-    return `<${this.tagName} ${this.params.map((p) => p.show()).join(" ")} ${this.isPair ? `>${this.children.map((p) => p.show()).join()}</${this.tagName}` : "/"}> `;
+    return `<${this.tagName} ${this.params.map((p) => p.show()).join(" ")} ${this.isPair ? `>${this.innerText}${this.children.map((p) => p.show()).join("")}</${this.tagName}` : "/"}> `;
   }
+
+  /**
+   * Parses string into Control object
+   * */
   static parse(s: string): Control {
-    // Parses string into Control object
+    //TODO
+    // Parse Params (textColor, bgColor, padding, margin, textSize)
+    //TODO
+    // Check Grid.Row and Grid.Column,
+    // Think how to wrap in <tr><td></td></tr>
     s = s.replace("<", "").replace(">", "").replace("/", "");
-    const block = s.split(" ")[0];
+    const splitted = s.split(" ");
+    const block = splitted[0];
     let tag = blanks[block];
     s = s.toLowerCase();
     return new Control(tag, true);

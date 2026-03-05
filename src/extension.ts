@@ -3,43 +3,50 @@
 import * as vscode from "vscode";
 import { Control } from "./classes/Control";
 
-const enum TYPES {
-  closedTag,
-  tag,
-  content,
-}
-
 /**
- * Recursion method for parsing whole document to get controls array
- */
-// TODO
-// implement stack (in notes)
-function parseArray(arr: string[], currentIndex: number = 0): Control[] {
+ *
+ * Parses array of strings (original tags spitted by '<')
+ * into array of Controls
+ *
+ * */
+function parseArray(arr: string[]): Control[] {
   const controls: Control[] = [];
   const controlStack: Control[] = []; // Control stack
   // Keeps track on unclosed tags
   // on pop pushes children of previous tag
   // or if it`s first element of stack, the control is pushed to controls array
 
-  for (let i = currentIndex; i < arr.length; i++) {
-    if (arr[i].includes("/>", arr[i].length - 2)) {
-      //TODO
-    }
-    if (!arr[i].includes(">", arr[i].length - 1)) {
-      //TODO
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i].endsWith("/>")) {
+      // non-pair tag
       const control = Control.parse(arr[i]);
-      control.children = parseArray(arr, i + 1);
-    }
-    if (arr[i][0] === "/") {
+      if (controlStack.length === 0) {
+        controls.push(control);
+      } else {
+        controlStack.at(controlStack.length - 1)?.children.push(control);
+      }
+    } else if (arr[i][0] === "/") {
+      // closed tag
       const closedTag = controlStack.pop();
       if (closedTag === undefined) {
-        throw Error("Closed unopened tag");
+        throw Error(`Closed unopened tag${arr[i]}`);
       }
       if (controlStack.length === 0) {
         controls.push(closedTag);
       } else {
         controlStack.at(controlStack.length - 1)?.children.push(closedTag);
       }
+    } else if (arr[i].includes(">")) {
+      // Opened tag
+      const splitted = arr[i].split(">");
+      const tagPart = splitted[0] + ">";
+      const innerTextPart = splitted[1] ? splitted[1] : "";
+      const control = Control.parse(tagPart);
+      control.innerText = innerTextPart;
+      controlStack.push(control);
+    } else // text in tag
+    {
+      controlStack[controlStack.length - 1].innerText = arr[i];
     }
   }
   return controls;
@@ -76,18 +83,16 @@ class XamlPreviewProvider implements vscode.CustomTextEditorProvider {
       //     i++;
       //   }
       // }
-
-      // TODO
-      // XAML is controls list foreach.show()
+      const xaml = controls.map((c) => c.show()).join("");
       webviewPanel.webview.postMessage({
-        xaml: controls.map((c) => c.show()).join(),
+        xaml,
       });
     };
 
     update();
 
-    const changeSub = vscode.workspace.onDidChangeTextDocument((e) => {
-      if (e.document.uri.toString() === document.uri.toString()) {
+    const changeSub = vscode.workspace.onDidSaveTextDocument((e) => {
+      if (e.uri.toString() === document.uri.toString()) {
         update();
       }
     });
@@ -96,6 +101,8 @@ class XamlPreviewProvider implements vscode.CustomTextEditorProvider {
   }
 
   private getHtml(webview: vscode.Webview): string {
+    //TODO
+    // add css for the components
     return `
       <!DOCTYPE html>
       <html>
@@ -105,7 +112,7 @@ class XamlPreviewProvider implements vscode.CustomTextEditorProvider {
         <script>
           window.addEventListener('message', event => {
             const xaml = event.data.xaml;
-            document.getElementById('root').innerHTML = xaml;
+            document.getElementById('root').innerHTML = \`<pre> \${xaml}</pre>\`;
           });
         </script>
       </body>

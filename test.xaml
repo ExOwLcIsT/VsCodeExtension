@@ -1,4 +1,8 @@
 <Window>
     <Grid>
+        <TextBlock>test</TextBlock>
+        <TextBlock>test</TextBlock>
+        <TextBlock>test</TextBlock>
+        <TextBlock>test</TextBlock>
     </Grid>
 </Window>
