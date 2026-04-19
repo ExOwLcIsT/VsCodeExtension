@@ -110,17 +110,22 @@ export class Control {
   children: Control[] = [];
   params: Param[] = [];
   innerText: string = "";
-  constructor(tagName: string, isPair: boolean) {
+  position: number;
+  constructor(tagName: string, isPair: boolean, position: number) {
     this.tagName = tagName;
     this.isPair = isPair;
+    this.position = position;
   }
   /**Stringify Control and it`s children elements */
   show(): string {
+    if (this.tagName === "") {
+      return "";
+    }
     const styles =
       this.params.length === 0
         ? ""
         : `style="${this.params.map((p) => p.show()).join(" ")}"`;
-    return `<${this.tagName} ${styles} ${this.isPair ? `>${this.innerText}${this.children.map((p) => p.show()).join("")}</${this.tagName.split(" ")[0]}` : "/"}> `;
+    return `<${this.tagName} data-position=${this.position} ${styles} ${this.isPair ? `>${this.innerText}${this.children.map((p) => p.show()).join("")}</${this.tagName.split(" ")[0]}` : "/"}> `;
   }
 
   /**
@@ -137,7 +142,7 @@ export class Control {
     const splitted = s.split(" ");
     const block = splitted[0];
     let tag = blanks[block];
-    const control: Control = new Control(tag, true);
+    const control: Control = new Control(tag, true, position);
     for (let i = 1; i < splitted.length; i++) {
       if (!splitted[i]) {
         continue;

@@ -63,7 +63,27 @@ class XamlPreviewProvider implements vscode.CustomTextEditorProvider {
     webviewPanel.webview.options = {
       enableScripts: true,
     };
+    webviewPanel.webview.onDidReceiveMessage(
+      (message: { position: number }) => {
+        try {
+          const substring = [...document.getText().matchAll(/</g)][
+            message.position
+          ];
 
+          const index = substring.index;
+
+          const position = document.positionAt(index);
+          const range = new vscode.Range(position, position);
+
+          vscode.window.showTextDocument(document, {
+            viewColumn: vscode.ViewColumn.One,
+            selection: range,
+          });
+        } catch (err) {
+          const message = err;
+        }
+      },
+    );
     webviewPanel.webview.html = this.getHtml(webviewPanel.webview);
 
     // 🔁 Update preview on text change
@@ -107,8 +127,17 @@ class XamlPreviewProvider implements vscode.CustomTextEditorProvider {
         update();
       }
     });
-
-    webviewPanel.onDidDispose(() => changeSub.dispose());
+    const changeEditorSub = vscode.window.onDidChangeActiveTextEditor(
+      (editor) => {
+        if (editor?.document.uri.toString() === document.uri.toString()) {
+          update();
+        }
+      },
+    );
+    webviewPanel.onDidDispose(() => {
+      changeSub.dispose();
+      changeEditorSub.dispose();
+    });
   }
 
   private getHtml(webview: vscode.Webview): string {
@@ -117,21 +146,17 @@ class XamlPreviewProvider implements vscode.CustomTextEditorProvider {
     const styleUri = webview.asWebviewUri(
       vscode.Uri.file(join(__dirname, "..", "styles", "components.css")),
     );
+    const scriptUri = webview.asWebviewUri(
+      vscode.Uri.file(join(__dirname, "..", "scripts", "document.js")),
+    );
     return `
       <!DOCTYPE html>
       <html>
       <head>
       <link rel = "stylesheet" href = "${styleUri}">
       </head>
-      <body>
-        <div id="root">Waiting for XAML...</div>
-        <script>
-          window.addEventListener('message', event => {
-            const xaml = event.data.xaml;
-            document.getElementById('root').innerHTML = \`<pre> \${xaml}</pre>\`;
-            }
-          );
-        </script>
+      <body>Waiting for XAML...
+        <script src = "${scriptUri}"></script>
       </body>
       </html>
     `;
