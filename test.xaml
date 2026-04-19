@@ -1,8 +1,9 @@
 <Window>
     <Grid>
+        <TextBlock background-color="black" Width="300" Height="200">test1</TextBlock>
         <TextBlock>test</TextBlock>
         <TextBlock>test</TextBlock>
         <TextBlock>test</TextBlock>
-        <TextBlock>test</TextBlock>
+        <TextBox/>
     </Grid>
 </Window>

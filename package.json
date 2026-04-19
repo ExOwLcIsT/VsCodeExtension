@@ -12,24 +12,32 @@
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
-    "customEditors": [{
-      "viewType": "xamlPreview.editor",
-      "displayName": "XAML Preview",
-      "selector": [{
-        "filenamePattern": "*.xaml"
-      }]
-    }],
-    "commands": [{
-      "command": "winforms-cs.render",
-      "title": "Render",
-      "icon": "$(window)"
-    }],
-    "menus": {
-      "editor/title": [{
+    "customEditors": [
+      {
+        "viewType": "xamlPreview.editor",
+        "displayName": "XAML Preview",
+        "selector": [
+          {
+            "filenamePattern": "*.xaml"
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
         "command": "winforms-cs.render",
-        "group": "navigation",
-        "when": "resourceExtname == .xaml"
-      }]
+        "title": "Render",
+        "icon": "$(window)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "winforms-cs.render",
+          "group": "navigation",
+          "when": "resourceExtname == .xaml"
+        }
+      ]
     }
   },
   "scripts": {
@@ -41,14 +49,15 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.105.0",
     "@types/mocha": "^10.0.10",
-    "@types/node": "22.x",
+    "@types/node": "^22.19.17",
+    "@types/vscode": "^1.105.0",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
-    "eslint": "^9.36.0",
-    "typescript": "^5.9.3",
     "@vscode/test-cli": "^0.0.11",
-    "@vscode/test-electron": "^2.5.2"
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.36.0",
+    "path-ts": "^1.0.5",
+    "typescript": "^5.9.3"
   }
 }

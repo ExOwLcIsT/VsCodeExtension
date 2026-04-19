@@ -82,7 +82,7 @@ const blanks: { [id: string]: string } = {
   Popup: "div", // absolute/fixed positioned
   ProgressBar: "progress",
   StatusBar: "footer", // or div role="status"
-  TextBlock: "p", // div is okay too
+  TextBlock: `div class="text-block"`, // div is okay too
   ToolTip: "", // title attr or custom div
 
   DocumentViewer: "div", // PDF.js or iframe
@@ -116,23 +116,42 @@ export class Control {
   }
   /**Stringify Control and it`s children elements */
   show(): string {
-    return `<${this.tagName} ${this.params.map((p) => p.show()).join(" ")} ${this.isPair ? `>${this.innerText}${this.children.map((p) => p.show()).join("")}</${this.tagName}` : "/"}> `;
+    const styles =
+      this.params.length === 0
+        ? ""
+        : `style="${this.params.map((p) => p.show()).join(" ")}"`;
+    return `<${this.tagName} ${styles} ${this.isPair ? `>${this.innerText}${this.children.map((p) => p.show()).join("")}</${this.tagName.split(" ")[0]}` : "/"}> `;
   }
 
   /**
    * Parses string into Control object
    * */
-  static parse(s: string): Control {
+  static parse(s: string, position: number): Control {
     //TODO
     // Parse Params (textColor, bgColor, padding, margin, textSize)
     //TODO
     // Check Grid.Row and Grid.Column,
     // Think how to wrap in <tr><td></td></tr>
-    s = s.replace("<", "").replace(">", "").replace("/", "");
+
+    s = s.replace("<", "").replace(">", "").replace("/", "").trim();
     const splitted = s.split(" ");
     const block = splitted[0];
     let tag = blanks[block];
-    s = s.toLowerCase();
-    return new Control(tag, true);
+    const control: Control = new Control(tag, true);
+    for (let i = 1; i < splitted.length; i++) {
+      if (!splitted[i]) {
+        continue;
+      }
+
+      const paramName = splitted[i].split("=")[0];
+      const paramValue = splitted[i].split("=")[1].split('"')[1];
+      if (paramName === "Content") {
+        control.innerText = paramValue;
+        continue;
+      }
+      const param: Param = new Param(paramName, paramValue);
+      control.params.push(param);
+    }
+    return control;
   }
 }
