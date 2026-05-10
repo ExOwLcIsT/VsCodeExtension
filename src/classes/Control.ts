@@ -12,7 +12,7 @@ const blanks: { [id: string]: string } = {
 
   Expander: "div", // expands like select, but with content
 
-  Grid: "table", // table (need to decide what to do with Grid.Row=0 ... )
+  Grid: "table",
 
   GridSplitter: "",
   "Grid.ColumnDefinitions": "",
@@ -111,6 +111,8 @@ export class Control {
   params: Param[] = [];
   innerText: string = "";
   position: number;
+  row?: number;
+  column?: number;
   constructor(tagName: string, isPair: boolean, position: number) {
     this.tagName = tagName;
     this.isPair = isPair;
@@ -125,7 +127,102 @@ export class Control {
       this.params.length === 0
         ? ""
         : `style="${this.params.map((p) => p.show()).join(" ")}"`;
-    return `<${this.tagName} data-position=${this.position} ${styles} ${this.isPair ? `>${this.innerText}${this.children.map((p) => p.show()).join("")}</${this.tagName.split(" ")[0]}` : "/"}> `;
+    if (this.tagName === "table") {
+      let defined: number = 0;
+      let stars: number = 0;
+      this.children.forEach((child) => {
+        const height: Param | undefined = child.params.find(
+          (p) => p.name === "height",
+        );
+        if (!height) {
+          stars++;
+        } else {
+          if (height.value.includes("*")) {
+            const numberBeforeStar: string = height.value.substring(
+              0,
+              height.value.indexOf("*"),
+            );
+            if (!numberBeforeStar) {
+              stars++;
+            } else {
+              stars += Number.parseFloat(numberBeforeStar);
+            }
+          } else {
+            defined += Number.parseInt(height.value.replace("px", ""));
+          }
+        }
+      });
+      this.children.forEach((child) => {
+        const height: Param | undefined = child.params.find(
+          (p) => p.name === "height",
+        );
+        if (!height) {
+          child.params.push(
+            new Param("height", `calc((100% - ${defined}px)/${stars})`),
+          );
+        } else {
+          if (height.value.includes("*")) {
+            let numberBeforeStar: string = height.value.substring(
+              0,
+              height.value.indexOf("*"),
+            );
+            if (!numberBeforeStar) {
+              numberBeforeStar = "1";
+            }
+            height.value = `calc((100% - ${defined}px)/${stars} * ${numberBeforeStar})`;
+          }
+        }
+      });
+    }
+    if (this.tagName === "tr") {
+      let defined: number = 0;
+      let stars: number = 0;
+      this.children.forEach((child) => {
+        const width: Param | undefined = child.params.find(
+          (p) => p.name === "width",
+        );
+        if (!width) {
+          stars++;
+        } else {
+          if (width.value.includes("*")) {
+            const numberBeforeStar: string = width.value.substring(
+              0,
+              width.value.indexOf("*"),
+            );
+            if (!numberBeforeStar) {
+              stars++;
+            } else {
+              stars += Number.parseFloat(numberBeforeStar);
+            }
+          } else {
+            defined += Number.parseInt(width.value);
+          }
+        }
+      });
+      this.children.forEach((child) => {
+        const width: Param | undefined = child.params.find(
+          (p) => p.name === "width",
+        );
+        if (!width) {
+          child.params.push(
+            new Param("width", `calc((100% - ${defined}px)/${stars})`),
+          );
+        } else {
+          if (width.value.includes("*")) {
+            let numberBeforeStar: string = width.value.substring(
+              0,
+              width.value.indexOf("*"),
+            );
+            if (!numberBeforeStar) {
+              numberBeforeStar = "1";
+            }
+            width.value = `calc((100% - ${defined}px)/${stars} * ${numberBeforeStar})`;
+          }
+        }
+      });
+    }
+    const result = `<${this.tagName} data-position="${this.position}" ${styles}${this.isPair ? `>${this.innerText}${this.children.map((p) => p.show()).join("")}</${this.tagName.split(" ")[0]}` : "/"}>`;
+    return result;
   }
 
   /**
@@ -133,13 +230,13 @@ export class Control {
    * */
   static parse(s: string, position: number): Control {
     //TODO
-    // Parse Params (textColor, bgColor, padding, margin, textSize)
+    // if it`s TR or TD, need to make copies
     //TODO
     // Check Grid.Row and Grid.Column,
     // Think how to wrap in <tr><td></td></tr>
 
-    s = s.replace("<", "").replace(">", "").replace("/", "").trim();
-    const splitted = s.split(" ");
+    s = s.replace("<", "").replace(">", "").replace("/", "");
+    const splitted = s.split(" ").map((x) => x.trim());
     const block = splitted[0];
     let tag = blanks[block];
     const control: Control = new Control(tag, true, position);
@@ -152,6 +249,14 @@ export class Control {
       const paramValue = splitted[i].split("=")[1].split('"')[1];
       if (paramName === "Content") {
         control.innerText = paramValue;
+        continue;
+      }
+      if (paramName === "Grid.Row") {
+        control.row = Number.parseInt(paramValue);
+        continue;
+      }
+      if (paramName === "Grid.Column") {
+        control.column = Number.parseInt(paramValue);
         continue;
       }
       const param: Param = new Param(paramName, paramValue);

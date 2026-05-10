@@ -18,31 +18,180 @@ function parseArray(arr: { text: string; position: number }[]): Control[] {
   // or if it`s first element of stack, the control is pushed to controls array
 
   for (let i = 0; i < arr.length; i++) {
+    // self-closing tag
     if (arr[i].text.endsWith("/>")) {
-      // non-pair tag
       const control = Control.parse(arr[i].text, arr[i].position);
+
+      if (control.tagName === "") {
+        continue;
+      }
       if (controlStack.length === 0) {
         controls.push(control);
-      } else {
-        controlStack.at(controlStack.length - 1)?.children.push(control);
+        continue;
       }
+      // if control belongs to Grid
+      if (control.row !== undefined || control.column !== undefined) {
+        // //moving through stack to find opened Grid (parent)
+        // for (let j = controlStack.length - 1; j >= 0; j--) {
+
+        // }
+
+        const table = controlStack[controlStack.length - 1];
+        if (table.tagName !== "table") {
+          controlStack.at(controlStack.length - 1)?.children.push(control);
+          continue;
+        }
+        const rows = table.children.filter((c) => c.tagName === "tr");
+        if (rows.length === 0) {
+          const row = new Control("tr", true, 0);
+          rows.push(row);
+          table.children.push(rows[0]);
+        }
+        const row =
+          rows[
+            Math.min(
+              control.row !== undefined ? control.row : rows.length - 1,
+              rows.length - 1,
+            )
+          ];
+        const columns = row.children.filter((c) => c.tagName === "td");
+        if (columns.length === 0) {
+          const column = new Control("td", true, 0);
+          columns.push(column);
+          row.children.push(columns[0]);
+        }
+        const column =
+          columns[
+            Math.min(
+              control.column !== undefined
+                ? control.column
+                : columns.length - 1,
+              columns.length - 1,
+            )
+          ];
+        column.children.push(control);
+        continue;
+      }
+      // if ColumnDefinition, table rows are filled with td
+      if (control.tagName === "td") {
+        const table = controlStack[controlStack.length - 1];
+        if (table.tagName !== "table") {
+          controlStack.at(controlStack.length - 1)?.children.push(control);
+          continue;
+        }
+        table.children.forEach((c) => {
+          if (c.tagName === "tr") {
+            c.children.push(new Control(
+                control.tagName,
+                control.isPair,
+                control.position,
+              ),);
+          }
+        });
+        continue;
+      }
+      controlStack.at(controlStack.length - 1)?.children.push(control);
     } else if (arr[i].text.startsWith("/")) {
-      // closed tag
-      const closedTag = controlStack.pop();
-      if (closedTag === undefined) {
+      // closing tag
+      const closingControl = Control.parse(arr[i].text.slice(1), 0);
+      if (!closingControl.tagName) {
+        continue;
+      }
+      const openedControl = controlStack.pop();
+      if (
+        openedControl === undefined ||
+        openedControl.tagName !== closingControl.tagName
+      ) {
         throw Error(`Closed unopened tag${arr[i].text}`);
       }
       if (controlStack.length === 0) {
-        controls.push(closedTag);
-      } else {
-        controlStack.at(controlStack.length - 1)?.children.push(closedTag);
+        controls.push(openedControl);
+        continue;
       }
+      // if control belongs to Grid
+      if (
+        openedControl.row !== undefined ||
+        openedControl.column !== undefined
+      ) {
+        // //moving through stack to find opened Grid (parent)
+        // for (let j = controlStack.length - 1; j >= 0; j--) {
+
+        // }
+
+        const table = controlStack[controlStack.length - 1];
+        if (table.tagName !== "table") {
+          controlStack
+            .at(controlStack.length - 1)
+            ?.children.push(openedControl);
+          continue;
+        }
+        const rows = table.children.filter((c) => c.tagName === "tr");
+        if (rows.length === 0) {
+          const row = new Control("tr", true, 0);
+          rows.push(row);
+          table.children.push(rows[0]);
+        }
+        const row =
+          rows[
+            Math.min(
+              openedControl.row !== undefined
+                ? openedControl.row
+                : rows.length - 1,
+              rows.length - 1,
+            )
+          ];
+        const columns = row.children.filter((c) => c.tagName === "td");
+        if (columns.length === 0) {
+          const column = new Control("td", true, 0);
+          columns.push(column);
+          row.children.push(columns[0]);
+        }
+        const column =
+          columns[
+            Math.min(
+              openedControl.column !== undefined
+                ? openedControl.column
+                : columns.length - 1,
+              columns.length - 1,
+            )
+          ];
+        column.children.push(openedControl);
+        continue;
+      }
+      // if ColumnDefinition, table rows are filled with td
+      //TODO
+      // change to filling with copies
+      if (openedControl.tagName === "td") {
+        const table = controlStack[controlStack.length - 1];
+        if (table.tagName !== "table") {
+          controlStack
+            .at(controlStack.length - 1)
+            ?.children.push(openedControl);
+          continue;
+        }
+        table.children.forEach((c) => {
+          if (c.tagName === "tr") {
+            c.children.push(
+              new Control(
+                openedControl.tagName,
+                openedControl.isPair,
+                openedControl.position,
+              ),
+            );
+          }
+        });
+        continue;
+      }
+      controlStack.at(controlStack.length - 1)?.children.push(openedControl);
     } else if (arr[i].text.includes(">")) {
       // Opened tag
       const splitted = arr[i].text.split(">");
       const tagPart = splitted[0] + ">";
       const innerTextPart = splitted[1] ? splitted[1] : "";
       const control = Control.parse(tagPart, arr[i].position);
+      if (!control.tagName) {
+        continue;
+      }
       control.innerText = innerTextPart;
       controlStack.push(control);
     } else // text in tag

@@ -4,8 +4,8 @@ export class Param {
   unit: string;
   constructor(name: string, value: string) {
     const mapping = paramMappings[name];
-    this.name  = mapping?.cssName ?? name.toLowerCase();
-    this.unit  = mapping?.unit  ?? "";
+    this.name = mapping?.cssName ?? name.toLowerCase();
+    this.unit = mapping?.unit ?? "";
     this.value = mapping?.transform ? mapping.transform(value) : value;
   }
   show() {
@@ -37,12 +37,84 @@ function wpfColorToCss(value: string): string {
 }
 const paramMappings: { [wpfProp: string]: ParamMapping } = {
   // Layout & Spacing
-  Width: { cssName: "width", unit: "px" },
-  Height: { cssName: "height", unit: "px" },
-  MinWidth: { cssName: "min-width", unit: "px" },
-  MinHeight: { cssName: "min-height", unit: "px" },
-  MaxWidth: { cssName: "max-width", unit: "px" },
-  MaxHeight: { cssName: "max-height", unit: "px" },
+  Width: {
+    cssName: "width",
+    unit: "",
+    transform: (v) => {
+      if (v.includes("*")) {
+        return v;
+      }
+      if (v === "Auto") {
+        return "auto";
+      }
+      return v + "px";
+    },
+  },
+  Height: {
+    cssName: "height",
+    unit: "",
+    transform: (v) => {
+      if (v.includes("*")) {
+        return v;
+      }
+      if (v === "Auto") {
+        return "auto";
+      }
+      return v + "px";
+    },
+  },
+  MinWidth: {
+    cssName: "min-width",
+    unit: "",
+    transform: (v) => {
+      if (v.includes("*")) {
+        return v;
+      }
+      if (v === "Auto") {
+        return "auto";
+      }
+      return v + "px";
+    },
+  },
+  MinHeight: {
+    cssName: "min-height",
+    unit: "",
+    transform: (v) => {
+      if (v.includes("*")) {
+        return v;
+      }
+      if (v === "Auto") {
+        return "auto";
+      }
+      return v + "px";
+    },
+  },
+  MaxWidth: {
+    cssName: "max-width",
+    unit: "",
+    transform: (v) => {
+      if (v.includes("*")) {
+        return v;
+      }
+      if (v === "Auto") {
+        return "auto";
+      }
+      return v + "px";
+    },
+  },
+  MaxHeight: {
+    cssName: "max-height",
+    unit: "",
+    transform: (v) => {
+      if (v.includes("*")) {
+        return v;
+      }
+      if (v === "Auto") {
+        return "auto";
+      }
+      return v + "px";
+    },
+  },
   Margin: { cssName: "margin", unit: "px" },
   Padding: { cssName: "padding", unit: "px" },
 
