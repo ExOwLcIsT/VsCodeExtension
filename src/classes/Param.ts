@@ -1,3 +1,15 @@
+function transformSize(v: string): string {
+  if (v.includes("*")) {
+    return v;
+  }
+  if (v === "Auto") {
+    return "fit-content !important";
+  }
+  if (!isNaN(Number(v))) {
+    return v + "px";
+  }
+  return v;
+}
 export class Param {
   name: string;
   value: string;
@@ -40,83 +52,40 @@ const paramMappings: { [wpfProp: string]: ParamMapping } = {
   Width: {
     cssName: "width",
     unit: "",
-    transform: (v) => {
-      if (v.includes("*")) {
-        return v;
-      }
-      if (v === "Auto") {
-        return "auto";
-      }
-      return v + "px";
-    },
+
+    transform: transformSize,
   },
   Height: {
     cssName: "height",
     unit: "",
-    transform: (v) => {
-      if (v.includes("*")) {
-        return v;
-      }
-      if (v === "Auto") {
-        return "auto";
-      }
-      return v + "px";
-    },
+
+    transform: transformSize,
   },
   MinWidth: {
     cssName: "min-width",
     unit: "",
-    transform: (v) => {
-      if (v.includes("*")) {
-        return v;
-      }
-      if (v === "Auto") {
-        return "auto";
-      }
-      return v + "px";
-    },
+    transform: transformSize,
   },
   MinHeight: {
     cssName: "min-height",
     unit: "",
-    transform: (v) => {
-      if (v.includes("*")) {
-        return v;
-      }
-      if (v === "Auto") {
-        return "auto";
-      }
-      return v + "px";
-    },
+
+    transform: transformSize,
   },
   MaxWidth: {
     cssName: "max-width",
     unit: "",
-    transform: (v) => {
-      if (v.includes("*")) {
-        return v;
-      }
-      if (v === "Auto") {
-        return "auto";
-      }
-      return v + "px";
-    },
+
+    transform: transformSize,
   },
   MaxHeight: {
     cssName: "max-height",
     unit: "",
-    transform: (v) => {
-      if (v.includes("*")) {
-        return v;
-      }
-      if (v === "Auto") {
-        return "auto";
-      }
-      return v + "px";
-    },
+
+    transform: transformSize,
   },
-  Margin: { cssName: "margin", unit: "px" },
-  Padding: { cssName: "padding", unit: "px" },
+  Margin: { cssName: "margin", unit: "", transform: transformSize },
+  Padding: { cssName: "padding", unit: "", transform: transformSize },
 
   // Alignment
   HorizontalAlignment: {
@@ -165,7 +134,7 @@ const paramMappings: { [wpfProp: string]: ParamMapping } = {
   },
 
   // Typography
-  FontSize: { cssName: "font-size", unit: "px" },
+  FontSize: { cssName: "font-size", unit: "", transform: transformSize },
   FontWeight: {
     cssName: "font-weight",
     unit: "",
@@ -211,7 +180,7 @@ const paramMappings: { [wpfProp: string]: ParamMapping } = {
         v
       ] ?? v,
   },
-  LineHeight: { cssName: "line-height", unit: "px" },
+  LineHeight: { cssName: "line-height", unit: "", transform: transformSize },
 
   // Color
   Foreground: { cssName: "color", unit: "", transform: wpfColorToCss },
@@ -225,8 +194,16 @@ const paramMappings: { [wpfProp: string]: ParamMapping } = {
   Stroke: { cssName: "border-color", unit: "", transform: wpfColorToCss },
 
   // Border
-  BorderThickness: { cssName: "border-width", unit: "px" },
-  CornerRadius: { cssName: "border-radius", unit: "px" },
+  BorderThickness: {
+    cssName: "border-width",
+    unit: "",
+    transform: transformSize,
+  },
+  CornerRadius: {
+    cssName: "border-radius",
+    unit: "",
+    transform: transformSize,
+  },
 
   // Visibility & Opacity
   Opacity: { cssName: "opacity", unit: "" },
@@ -238,10 +215,10 @@ const paramMappings: { [wpfProp: string]: ParamMapping } = {
   },
 
   // Positioning (Canvas)
-  "Canvas.Left": { cssName: "left", unit: "px" },
-  "Canvas.Top": { cssName: "top", unit: "px" },
-  "Canvas.Right": { cssName: "right", unit: "px" },
-  "Canvas.Bottom": { cssName: "bottom", unit: "px" },
+  "Canvas.Left": { cssName: "left", unit: "", transform: transformSize },
+  "Canvas.Top": { cssName: "top", unit: "", transform: transformSize },
+  "Canvas.Right": { cssName: "right", unit: "", transform: transformSize },
+  "Canvas.Bottom": { cssName: "bottom", unit: "", transform: transformSize },
   "Canvas.ZIndex": { cssName: "z-index", unit: "" },
 
   // Flex (StackPanel)

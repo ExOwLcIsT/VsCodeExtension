@@ -5,20 +5,36 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:testWPFApp"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-       
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+        Title="MainWindow">
+    <Grid TextElement.FontSize="20">
+    
+    <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+    </Grid.RowDefinitions>
 <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-        <TextBlock Grid.Row="0" Grid.Column="0">1</TextBlock>
-        <TextBlock Grid.Row="0" Grid.Column="1">2</TextBlock>
-        <TextBlock Grid.Row="1" Grid.Column="0">3</TextBlock>
-        <TextBlock Grid.Row="1" Grid.Column="1">4</TextBlock>
-    </Grid>
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition />
+    </Grid.ColumnDefinitions>
+    <Label Content="Firstname" VerticalAlignment="Center" Margin="10"/>
+    <TextBox Grid.Column="1" Text="Thomas Claudius" Margin="10"/>
+
+    <Label Grid.Row="1" Content="Lastname" VerticalAlignment="Center" Margin="10"/>
+    <TextBox Grid.Row="1" Grid.Column="1" Text="Huber" Margin="10"/>
+
+    <CheckBox Grid.Row="2" Grid.Column="1" 
+    Content="Is developer"
+    IsChecked="True"
+    Margin="10"/>
+
+    <StackPanel Grid.Row="3"
+    Grid.ColumnSpan="2" 
+    Orientation="Horizontal" 
+    VerticalAlignment="Bottom" Margin="10">
+        <Button Content="Save" Width="100" Margin="5"/>
+        <Button Content="Cancel" Width="100" Margin="5"/>
+    </StackPanel>
+</Grid>
 </Window>

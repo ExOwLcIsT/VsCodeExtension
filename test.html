@@ -1,16 +1,28 @@
-<div class="window" data-position=0
+`
+
+<div class="window" data-position="0"
     style="x:class:testWPFApp.MainWindow; xmlns:http:/schemas.microsoft.com/winfx/2006/xaml/presentation; xmlns:x:http://schemas.microsoft.com/winfx/2006/xaml; xmlns:d:http://schemas.microsoft.com/expression/blend/2008; xmlns:mc:http://schemas.openxmlformats.org/markup-compatibility/2006; xmlns:local:clr-namespace:testWPFApp; mc:ignorable:d; title:MainWindow; height:450px; width:800px;">
-    <table data-position=1>
-        <tr data-position=3 style="height:*px;">
-            <td data-p…></td>
-        </tr>
-        <tr data-position=4 style="height:*px;">
-            <td data-position=7 style="width:*px;"></td>
-            <td data-position=8 style="width:*px;"></td>
-        </tr>
-        <div class="text-block" data-position=10 style="grid.row:0; grid.column:0;">1</div>
-        <div class="text-block" data-position=12 style="grid.row:0; grid.column:1;">2</div>
-        <div class="text-block" data-position=14 style="grid.row:1; grid.column:0;">3</div>
-        <div class="text-block" data-position=16 style="grid.row:1; grid.column:1;">4</div>
+    <table data-position="1">
+        <div class="tr" data-position="3" style="height:calc((100% - 100px)/3 * 1);">
+            <td data-position="8" style="background-color:red; width:calc((100% - 0px)/2 * 1);">
+                <div class="text-block" data-position="11">1</div>
+            </td>
+            <td data-position="9" style="background-color:blue; width:calc((100% - 0px)/2 * 1);">
+                <div class="text-block" data-position="13">2</div>
+            </td>
+        </div>
+        <div class="tr" data-position="4" style="height:100px;">
+            <td data-position="8" style="background-color:red; width:calc((100% - 0px)/2 * 1);">
+                <div class="text-block" data-position="15">3</div>
+            </td>
+            <td data-position="9" style="background-color:blue; width:calc((100% - 0px)/2 * 1);">
+                <div class="text-block" data-position="17">4</div>
+            </td>
+        </div>
+        <div class="tr" data-position="5" style="height:calc((100% - 100px)/3 * 2);">
+            <td data-position="8" style="background-color:red; width:calc((100% - 0px)/2 * 1);"></td>
+            <td data-position="9" style="background-color:blue; width:calc((100% - 0px)/2 * 1);"></td>
+        </div>
     </table>
 </div>
+`

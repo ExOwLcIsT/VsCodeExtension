@@ -1,3 +1,4 @@
+import { ColorThemeKind } from "vscode";
 import { Param } from "./Param";
 
 /**Blanks to convert WPF Controls into HTML elements*/
@@ -12,12 +13,12 @@ const blanks: { [id: string]: string } = {
 
   Expander: "div", // expands like select, but with content
 
-  Grid: "table",
+  Grid: 'div class="table"',
 
   GridSplitter: "",
   "Grid.ColumnDefinitions": "",
-  ColumnDefinition: "td",
-  RowDefinition: "tr",
+  ColumnDefinition: 'div class="td"',
+  RowDefinition: 'div class="tr"',
   GroupBox: "fieldset",
 
   Panel: "div",
@@ -44,7 +45,7 @@ const blanks: { [id: string]: string } = {
   Button: "button",
 
   RepeatButton: "button", // JS hold behavior
-  DataGrid: "table",
+  DataGrid: 'div class="table"',
 
   ListView: "ul",
 
@@ -118,6 +119,7 @@ export class Control {
     this.isPair = isPair;
     this.position = position;
   }
+
   /**Stringify Control and it`s children elements */
   show(): string {
     if (this.tagName === "") {
@@ -127,7 +129,7 @@ export class Control {
       this.params.length === 0
         ? ""
         : `style="${this.params.map((p) => p.show()).join(" ")}"`;
-    if (this.tagName === "table") {
+    if (this.tagName === 'div class="table"') {
       let defined: number = 0;
       let stars: number = 0;
       this.children.forEach((child) => {
@@ -148,7 +150,10 @@ export class Control {
               stars += Number.parseFloat(numberBeforeStar);
             }
           } else {
-            defined += Number.parseInt(height.value.replace("px", ""));
+            const int = Number.parseInt(height.value);
+            if (!Number.isNaN(int)) {
+              defined += int;
+            }
           }
         }
       });
@@ -174,7 +179,7 @@ export class Control {
         }
       });
     }
-    if (this.tagName === "tr") {
+    if (this.tagName === 'div class="tr"') {
       let defined: number = 0;
       let stars: number = 0;
       this.children.forEach((child) => {
@@ -195,7 +200,10 @@ export class Control {
               stars += Number.parseFloat(numberBeforeStar);
             }
           } else {
-            defined += Number.parseInt(width.value);
+            const int = Number.parseInt(width.value);
+            if (!Number.isNaN(int)) {
+              defined += int;
+            }
           }
         }
       });
@@ -207,17 +215,17 @@ export class Control {
           child.params.push(
             new Param("width", `calc((100% - ${defined}px)/${stars})`),
           );
-        } else {
-          if (width.value.includes("*")) {
-            let numberBeforeStar: string = width.value.substring(
-              0,
-              width.value.indexOf("*"),
-            );
-            if (!numberBeforeStar) {
-              numberBeforeStar = "1";
-            }
-            width.value = `calc((100% - ${defined}px)/${stars} * ${numberBeforeStar})`;
+          return;
+        }
+        if (width.value.includes("*")) {
+          let numberBeforeStar: string = width.value.substring(
+            0,
+            width.value.indexOf("*"),
+          );
+          if (!numberBeforeStar) {
+            numberBeforeStar = "1";
           }
+          width.value = `calc((100% - ${defined}px)/${stars} * ${numberBeforeStar})`;
         }
       });
     }
@@ -228,28 +236,31 @@ export class Control {
   /**
    * Parses string into Control object
    * */
-  static parse(s: string, position: number): Control {
-    //TODO
-    // if it`s TR or TD, need to make copies
-    //TODO
-    // Check Grid.Row and Grid.Column,
-    // Think how to wrap in <tr><td></td></tr>
-
+  static parse(s: string, position: number, isPair: boolean = true): Control {
     s = s.replace("<", "").replace(">", "").replace("/", "");
-    const splitted = s.split(" ").map((x) => x.trim());
+    const splitted =
+      s.match(/(?:[^\s"]+|"[^"]*")+/g)?.map((x) => x.trim()) ?? [];
     const block = splitted[0];
     let tag = blanks[block];
-    const control: Control = new Control(tag, true, position);
+    const control: Control = new Control(tag, isPair, position);
     for (let i = 1; i < splitted.length; i++) {
       if (!splitted[i]) {
         continue;
       }
 
-      const paramName = splitted[i].split("=")[0];
-      const paramValue = splitted[i].split("=")[1].split('"')[1];
+      const paramName: string = splitted[i].split("=")[0];
+      const paramValue: string = splitted[i].split("=")[1].split('"')[1];
       if (paramName === "Content") {
         control.innerText = paramValue;
         continue;
+      }
+      if (paramName === "Text") {
+        if (control.isPair) {
+          control.innerText = paramValue;
+        } else {
+          control.tagName += `value="${paramValue}"`;
+          continue;
+        }
       }
       if (paramName === "Grid.Row") {
         control.row = Number.parseInt(paramValue);
@@ -262,6 +273,12 @@ export class Control {
       const param: Param = new Param(paramName, paramValue);
       control.params.push(param);
     }
+    return control;
+  }
+  static copy(other: Control): Control {
+    const control = new Control(other.tagName, other.isPair, other.position);
+    control.params = other.params.map((p) => new Param(p.name, p.value));
+    control.innerText = other.innerText;
     return control;
   }
 }

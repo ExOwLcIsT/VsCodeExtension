@@ -3,13 +3,13 @@
 import * as vscode from "vscode";
 import { Control } from "./classes/Control";
 import { join } from "path-ts";
-
 /**
  *
  * Parses array of strings (original tags spitted by '<')
  * into array of Controls
  *
  * */
+
 function parseArray(arr: { text: string; position: number }[]): Control[] {
   const controls: Control[] = [];
   const controlStack: Control[] = []; // Control stack
@@ -20,7 +20,7 @@ function parseArray(arr: { text: string; position: number }[]): Control[] {
   for (let i = 0; i < arr.length; i++) {
     // self-closing tag
     if (arr[i].text.endsWith("/>")) {
-      const control = Control.parse(arr[i].text, arr[i].position);
+      const control = Control.parse(arr[i].text, arr[i].position, false);
 
       if (control.tagName === "") {
         continue;
@@ -29,67 +29,94 @@ function parseArray(arr: { text: string; position: number }[]): Control[] {
         controls.push(control);
         continue;
       }
-      // if control belongs to Grid
-      if (control.row !== undefined || control.column !== undefined) {
-        // //moving through stack to find opened Grid (parent)
-        // for (let j = controlStack.length - 1; j >= 0; j--) {
-
-        // }
-
+      // if RowDefinition, adding row to the table
+      if (control.tagName === 'div class="tr"') {
+        control.isPair = true;
         const table = controlStack[controlStack.length - 1];
-        if (table.tagName !== "table") {
-          controlStack.at(controlStack.length - 1)?.children.push(control);
-          continue;
+        const rows = table.children.filter((c) =>
+          c.tagName.includes('div class="tr"'),
+        );
+        if (rows.length > 0) {
+          control.children = rows[0].children.map((c) => Control.copy(c));
         }
-        const rows = table.children.filter((c) => c.tagName === "tr");
-        if (rows.length === 0) {
-          const row = new Control("tr", true, 0);
-          rows.push(row);
-          table.children.push(rows[0]);
+        if (rows.length === 1 && rows[0].position === -1) {
+          const index = table.children.indexOf(rows[0]);
+          table.children.splice(index, 1);
         }
-        const row =
-          rows[
-            Math.min(
-              control.row !== undefined ? control.row : rows.length - 1,
-              rows.length - 1,
-            )
-          ];
-        const columns = row.children.filter((c) => c.tagName === "td");
-        if (columns.length === 0) {
-          const column = new Control("td", true, 0);
-          columns.push(column);
-          row.children.push(columns[0]);
-        }
-        const column =
-          columns[
-            Math.min(
-              control.column !== undefined
-                ? control.column
-                : columns.length - 1,
-              columns.length - 1,
-            )
-          ];
-        column.children.push(control);
+        table?.children.push(control);
         continue;
       }
       // if ColumnDefinition, table rows are filled with td
-      if (control.tagName === "td") {
+      if (control.tagName === 'div class="td"') {
+        control.isPair = true;
         const table = controlStack[controlStack.length - 1];
-        if (table.tagName !== "table") {
+        if (table.tagName !== 'div class="table"') {
           controlStack.at(controlStack.length - 1)?.children.push(control);
           continue;
         }
+        const rows = table.children.filter(
+          (c) => c.tagName === 'div class="tr"',
+        );
+        if (rows.length === 0) {
+          const row = new Control('div class="tr"', true, -1);
+          table.children.push(row);
+        }
         table.children.forEach((c) => {
-          if (c.tagName === "tr") {
-            c.children.push(new Control(
-                control.tagName,
-                control.isPair,
-                control.position,
-              ),);
+          if (c.tagName === 'div class="tr"') {
+            c.children.push(Control.copy(control));
           }
         });
         continue;
       }
+      if (controlStack.length > 1) {
+        const table = controlStack[controlStack.length - 1];
+
+        //If the element with either Grid.Row or Grid.Column is not in grid, it is put as a child in the container
+        if (table.tagName === 'div class="table"') {
+          const rows = table.children.filter(
+            (c) => c.tagName === 'div class="tr"',
+          );
+          if (rows.length === 0) {
+            const row = new Control('div class="tr"', true, 0);
+            rows.push(row);
+            table.children.push(rows[0]);
+          }
+          let row: Control;
+          if (!control.row) {
+            const emptyRow = rows.find((r) => r.children.length === 0);
+            row = emptyRow ? emptyRow : rows[0];
+          } else {
+            control.row = Math.min(
+              rows.length,
+              Math.max(0, control.row ? control.row : 0),
+            );
+            row = rows[control.row];
+          }
+
+          const columns = row.children.filter(
+            (c) => c.tagName === 'div class="td"',
+          );
+          if (columns.length === 0) {
+            const column = new Control('div class="td"', true, 0);
+            columns.push(column);
+            row.children.push(columns[0]);
+          }
+          let column: Control;
+          if (!control.column) {
+            const emptyColumn = columns.find((r) => r.children.length === 0);
+            column = emptyColumn ? emptyColumn : columns[0];
+          } else {
+            control.column = Math.min(
+              columns.length,
+              Math.max(0, control.column ? control.column : 0),
+            );
+            column = columns[control.column];
+          }
+          column.children.push(control);
+          continue;
+        }
+      }
+
       controlStack.at(controlStack.length - 1)?.children.push(control);
     } else if (arr[i].text.startsWith("/")) {
       // closing tag
@@ -108,87 +135,94 @@ function parseArray(arr: { text: string; position: number }[]): Control[] {
         controls.push(openedControl);
         continue;
       }
-      // if control belongs to Grid
-      if (
-        openedControl.row !== undefined ||
-        openedControl.column !== undefined
-      ) {
-        // //moving through stack to find opened Grid (parent)
-        // for (let j = controlStack.length - 1; j >= 0; j--) {
 
-        // }
-
+      // if RowDefinition, adding row to the table
+      if (openedControl.tagName === 'div class="tr"') {
+        openedControl.isPair = true;
         const table = controlStack[controlStack.length - 1];
-        if (table.tagName !== "table") {
-          controlStack
-            .at(controlStack.length - 1)
-            ?.children.push(openedControl);
-          continue;
+        const rows = table.children.filter((c) =>
+          c.tagName.includes('div class="tr"'),
+        );
+        if (rows.length > 0) {
+          openedControl.children = rows[0].children.map((c) => Control.copy(c));
         }
-        const rows = table.children.filter((c) => c.tagName === "tr");
-        if (rows.length === 0) {
-          const row = new Control("tr", true, 0);
-          rows.push(row);
-          table.children.push(rows[0]);
+        if (rows.length === 1 && rows[0].position === -1) {
+          const index = table.children.indexOf(rows[0]);
+          table.children.splice(index, 1);
         }
-        const row =
-          rows[
-            Math.min(
-              openedControl.row !== undefined
-                ? openedControl.row
-                : rows.length - 1,
-              rows.length - 1,
-            )
-          ];
-        const columns = row.children.filter((c) => c.tagName === "td");
-        if (columns.length === 0) {
-          const column = new Control("td", true, 0);
-          columns.push(column);
-          row.children.push(columns[0]);
-        }
-        const column =
-          columns[
-            Math.min(
-              openedControl.column !== undefined
-                ? openedControl.column
-                : columns.length - 1,
-              columns.length - 1,
-            )
-          ];
-        column.children.push(openedControl);
+        table?.children.push(openedControl);
         continue;
       }
       // if ColumnDefinition, table rows are filled with td
-      //TODO
-      // change to filling with copies
-      if (openedControl.tagName === "td") {
+      if (openedControl.tagName === 'div class="td"') {
+        openedControl.isPair = true;
         const table = controlStack[controlStack.length - 1];
-        if (table.tagName !== "table") {
+        if (table.tagName !== 'div class="table"') {
           controlStack
             .at(controlStack.length - 1)
             ?.children.push(openedControl);
           continue;
         }
         table.children.forEach((c) => {
-          if (c.tagName === "tr") {
-            c.children.push(
-              new Control(
-                openedControl.tagName,
-                openedControl.isPair,
-                openedControl.position,
-              ),
-            );
+          if (c.tagName === 'div class="tr"') {
+            c.children.push(Control.copy(openedControl));
           }
         });
         continue;
       }
+      if (controlStack.length > 1) {
+        const table = controlStack[controlStack.length - 1];
+        if (table.tagName === 'div class="table"') {
+          const rows = table.children.filter(
+            (c) => c.tagName === 'div class="tr"',
+          );
+          if (rows.length === 0) {
+            const row = new Control('div class="tr"', true, 0);
+            rows.push(row);
+            table.children.push(rows[0]);
+          }
+          let row: Control;
+          if (!openedControl.row) {
+            const emptyRow = rows.find((r) => r.children.length === 0);
+            row = emptyRow ? emptyRow : rows[0];
+          } else {
+            openedControl.row = Math.min(
+              rows.length,
+              Math.max(0, openedControl.row ? openedControl.row : 0),
+            );
+            row = rows[openedControl.row];
+          }
+          const columns = row.children.filter(
+            (c) => c.tagName === 'div class="td"',
+          );
+          if (columns.length === 0) {
+            const column = new Control('div class="td"', true, 0);
+            columns.push(column);
+            row.children.push(columns[0]);
+          }
+          let column: Control;
+          if (!openedControl.column) {
+            const emptyColumn = columns.find((r) => r.children.length === 0);
+            column = emptyColumn ? emptyColumn : columns[0];
+          } else {
+            openedControl.column = Math.min(
+              columns.length,
+              Math.max(0, openedControl.column ? openedControl.column : 0),
+            );
+            column = columns[openedControl.column];
+          }
+          column.children.push(openedControl);
+          continue;
+        }
+      }
+
       controlStack.at(controlStack.length - 1)?.children.push(openedControl);
     } else if (arr[i].text.includes(">")) {
       // Opened tag
       const splitted = arr[i].text.split(">");
       const tagPart = splitted[0] + ">";
       const innerTextPart = splitted[1] ? splitted[1] : "";
-      const control = Control.parse(tagPart, arr[i].position);
+      const control = Control.parse(tagPart, arr[i].position, true);
       if (!control.tagName) {
         continue;
       }
@@ -250,9 +284,9 @@ class XamlPreviewProvider implements vscode.CustomTextEditorProvider {
 
         const controls: Control[] = parseArray(arr);
 
-        const xaml = controls.map((c) => c.show()).join("");
+        const xaml = controls.map((c) => c.show()).join("\n");
         webviewPanel.webview.postMessage({
-          xaml,
+          xaml: `${xaml}<xmp>${xaml}</xmp>`,
         });
       } catch (error) {
         if (typeof error === "string") {
@@ -290,7 +324,6 @@ class XamlPreviewProvider implements vscode.CustomTextEditorProvider {
   }
 
   private getHtml(webview: vscode.Webview): string {
-    //TODO
     // add css for the components
     const styleUri = webview.asWebviewUri(
       vscode.Uri.file(join(__dirname, "..", "styles", "components.css")),
@@ -298,7 +331,7 @@ class XamlPreviewProvider implements vscode.CustomTextEditorProvider {
     const scriptUri = webview.asWebviewUri(
       vscode.Uri.file(join(__dirname, "..", "scripts", "document.js")),
     );
-    return `
+    const htmlTemplate = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -309,6 +342,7 @@ class XamlPreviewProvider implements vscode.CustomTextEditorProvider {
       </body>
       </html>
     `;
+    return htmlTemplate;
   }
 }
 
