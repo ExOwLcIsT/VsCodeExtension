@@ -3,7 +3,7 @@ function transformSize(v: string): string {
     return v;
   }
   if (v === "Auto") {
-    return "fit-content !important";
+    return "fit-content";
   }
   if (!isNaN(Number(v))) {
     return v + "px";
@@ -100,7 +100,7 @@ const paramMappings: { [wpfProp: string]: ParamMapping } = {
       })[v] ?? v,
   },
   VerticalAlignment: {
-    cssName: "justify-self",
+    cssName: "align-self",
     unit: "",
     transform: (v) =>
       ({

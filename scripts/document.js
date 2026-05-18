@@ -1,7 +1,7 @@
 const vsCodeAPI = acquireVsCodeApi();
 window.addEventListener("message", (event) => {
-  const xaml = event.data.xaml;
-  document.body.innerHTML = `\`<pre> ${xaml}</pre>\``;
+  const xaml = event.data.xaml ?? "";
+  document.body.innerHTML = `<main class="preview-root">${xaml}</main>`;
 });
 document.addEventListener("dblclick", (e) => {
   const target = e.target.closest("[data-position]");

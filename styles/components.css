@@ -1,85 +1,523 @@
 * {
     box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    width: auto;
-    height: auto;
-    color: black;
 }
 
-.window {
-    border: 1px solid #2a6bbf;
-    outline: 1px solid rgba(255, 255, 255, 0.35);
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
 
-    background-color: rgba(241, 241, 241);
-    width: 400px;
-    height: 300px;
+body {
+    margin: 0;
+    padding: 16px;
+    min-height: 100vh;
+    color: #1f1f1f;
+    background: #f3f3f3;
+    font: 12px "Segoe UI", Tahoma, sans-serif;
+}
+
+.preview-root {
+    min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+.hovered {
+    outline: 1px solid #111;
+    outline-offset: 1px;
+}
+
+.wpf-window,
+.window {
+    display: flex;
+    flex-direction: column;
+    width: 1152px;
+    height: 592px;
+    margin: 30px;
+    overflow: hidden;
+    color: #1f1f1f;
+    background: #f1f1f1;
+    border: 1px solid #2a6bbf;
+    border-radius: 8px 8px 4px 4px;
     box-shadow:
         0 0 0 1px #1a4e99,
         inset 0 0 0 1px rgba(255, 255, 255, 0.5),
-        0 4px 20px rgba(0, 0, 0, 0.55);
-    border-radius: 8px 8px 4px 4px;
-    margin: 30px;
+        0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
-
-
-
-
-.hovered {
-    border: black 1px solid;
+.wpf-window-title-bar {
+    display: flex;
+    flex: 0 0 32px;
+    align-items: center;
+    min-width: 0;
+    height: 32px;
+    color: #202020;
+    background: #f8f8f8;
+    border-bottom: 1px solid #d9d9d9;
+    user-select: none;
 }
 
+.wpf-window-icon {
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    margin: 0 8px 0 10px;
+    background:
+        linear-gradient(#8fc5a3, #6ba07c) 5px 5px / 6px 6px no-repeat,
+        linear-gradient(#eaf4ef, #cbdcd2);
+    border: 1px solid #a8b9b0;
+    box-shadow: inset 0 0 0 2px #fff;
+}
 
-/* StackPanel — вертикальна орієнтація (за замовчуванням) */
+.wpf-window-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 12px;
+    line-height: 32px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wpf-window-controls {
+    display: flex;
+    flex: 0 0 auto;
+    align-self: stretch;
+    margin-left: auto;
+}
+
+.wpf-window-control {
+    position: relative;
+    display: block;
+    width: 46px;
+    height: 32px;
+}
+
+.wpf-window-control:hover {
+    background: #e5e5e5;
+}
+
+.wpf-window-close:hover {
+    background: #e81123;
+}
+
+.wpf-window-minimize::before {
+    position: absolute;
+    top: 16px;
+    left: 18px;
+    width: 10px;
+    height: 1px;
+    background: #1f1f1f;
+    content: "";
+}
+
+.wpf-window-maximize::before {
+    position: absolute;
+    top: 10px;
+    left: 17px;
+    width: 10px;
+    height: 10px;
+    border: 1px solid #1f1f1f;
+    content: "";
+}
+
+.wpf-window-close::before,
+.wpf-window-close::after {
+    position: absolute;
+    top: 9px;
+    left: 22px;
+    width: 1px;
+    height: 14px;
+    background: #1f1f1f;
+    content: "";
+}
+
+.wpf-window-close:hover::before,
+.wpf-window-close:hover::after {
+    background: #fff;
+}
+
+.wpf-window-close::before {
+    transform: rotate(45deg);
+}
+
+.wpf-window-close::after {
+    transform: rotate(-45deg);
+}
+
+.wpf-window-content {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.wpf-window-content>.wpf-grid,
+.wpf-window-content>.table {
+    height: 100%;
+}
+
+.wpf-page {
+    min-height: 100%;
+    background: #fff;
+}
+
+.wpf-panel,
+.wpf-border,
+.wpf-bullet-decorator,
+.wpf-dock-panel,
+.wpf-popup,
+.wpf-tab-control,
+.wpf-document-viewer,
+.wpf-flow-document-page-viewer,
+.wpf-flow-document-reader,
+.wpf-flow-document-scroll-viewer,
+.wpf-sticky-note-control,
+.wpf-rich-text-box {
+    display: block;
+    min-width: 0;
+    min-height: 0;
+}
+
+.wpf-border {
+    border: 1px solid #abadb3;
+    background: transparent;
+}
+
+.wpf-canvas {
+    position: relative;
+    display: block;
+    min-width: 0;
+    min-height: 0;
+}
+
+.wpf-canvas>* {
+    position: absolute;
+}
+
+.wpf-dock-panel {
+    display: flex;
+    align-items: stretch;
+}
+
+.wpf-stack-panel,
 .stackpanel {
     display: flex;
     flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
-    flex-wrap: nowrap;
     gap: 0;
-    width: auto;
-    height: auto;
-    align-items: center;
+    min-width: 0;
+    min-height: 0;
 }
 
-.stackpanel * {
-
-    width: 100%;
+.wpf-stack-panel>*,
+.stackpanel>* {
+    flex-shrink: 0;
 }
 
-
-.textblock {
-    font-size: 11px;
-    height: 16px;
+.wpf-stack-panel[style*="flex-direction:row"],
+.stackpanel[style*="flex-direction:row"] {
+    align-items: flex-start;
 }
 
-/* Grid container */
+.wpf-stack-panel[style*="flex-direction:row"]>*,
+.stackpanel[style*="flex-direction:row"]>* {
+    flex: 0 0 auto;
+}
+
+.wpf-wrap-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    align-items: flex-start;
+}
+
+.wpf-grid,
+.wpf-data-grid,
 .table {
     display: flex;
     flex-direction: column;
-    border-collapse: collapse;
-    border-spacing: 0;
-
     width: 100%;
     height: 100%;
+    min-width: 0;
+    min-height: 0;
+    border-collapse: collapse;
+    border-spacing: 0;
 }
 
-/* Row */
+.wpf-grid-row,
 .tr {
     display: flex;
     flex-direction: row;
     width: 100%;
+    min-width: 0;
+    min-height: 0;
 }
 
-/* Cell */
+.wpf-grid-cell,
 .td {
     display: flex;
     position: relative;
+    min-width: 0;
+    min-height: 0;
     overflow: hidden;
+    height: inherit;
 }
 
-.td * {
+.wpf-group-box {
+    min-width: 0;
+    margin: 4px;
+    padding: 10px;
+    border: 1px solid #abadb3;
+    border-radius: 2px;
+    background: #f7f7f7;
+}
+
+.wpf-separator {
     width: 100%;
+    height: 1px;
+    margin: 4px 0;
+    border: 0;
+    background: #c8c8c8;
+}
+
+.wpf-scroll-viewer {
+    overflow: auto;
+    min-width: 0;
+    min-height: 0;
+}
+
+.wpf-thumb {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background:
+        repeating-linear-gradient(45deg, #9a9a9a 0 1px, transparent 1px 4px);
+    cursor: grab;
+}
+
+.wpf-button,
+.wpf-repeat-button {
+    width: 100px;
+    height: 31px;
+    min-width: 75px;
+    min-height: 31px;
+    padding: 3px 12px;
+    color: #1f1f1f;
+    background: linear-gradient(#fefefe, #e5e5e5);
+    border: 1px solid #adadad;
+    border-radius: 2px;
+    cursor: default;
+}
+
+.wpf-button:hover,
+.wpf-repeat-button:hover {
+    border-color: #7eb4ea;
+    background: linear-gradient(#ecf6fd, #dcecfc);
+}
+
+.wpf-button:active,
+.wpf-repeat-button:active {
+    border-color: #569de5;
+    background: #c4e5f6;
+}
+
+.wpf-list-view,
+.wpf-tree-view,
+.wpf-context-menu {
+    margin: 0;
+    padding: 2px;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #abadb3;
+}
+
+.wpf-tree-view {
+    padding-left: 16px;
+}
+
+.wpf-context-menu {
+    display: inline-block;
+    min-width: 120px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.wpf-menu {
+    display: flex;
+    min-height: 24px;
+    align-items: center;
+    gap: 2px;
+    padding: 2px;
+    background: #f0f0f0;
+    border: 1px solid #d6d6d6;
+}
+
+.wpf-check-box,
+.wpf-label,
+.wpf-access-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 18px;
+}
+
+.wpf-check-box-input,
+.wpf-radio-button {
+    width: 13px;
+    height: 13px;
+    margin: 0 4px 0 0;
+}
+
+.wpf-combo-box,
+.wpf-list-box,
+.wpf-text-box,
+.wpf-password-box,
+.wpf-calendar,
+.wpf-date-picker,
+.wpf-open-file-dialog {
+    min-height: calc(1.2em + 8px);
+    padding: 3px 4px;
+    color: #1f1f1f;
+    background: #fff;
+    border: 1px solid #abadb3;
+    border-radius: 0;
+    line-height: 1.2;
+}
+
+.wpf-combo-box,
+.wpf-list-box {
+    min-width: 120px;
+}
+
+.wpf-list-box {
+    min-height: 72px;
+}
+
+.wpf-text-box,
+.wpf-password-box {
+    min-width: 120px;
+}
+
+.wpf-slider {
+    min-width: 100px;
+    accent-color: #0078d7;
+}
+
+.wpf-frame {
+    width: 100%;
+    min-height: 120px;
+    border: 1px solid #abadb3;
+    background: #fff;
+}
+
+.wpf-hyperlink {
+    color: #0066cc;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.wpf-tab-control {
+    padding: 4px;
+    border: 1px solid #abadb3;
+    background: #f7f7f7;
+}
+
+.wpf-popup {
+    display: inline-block;
+    padding: 4px;
+    background: #fff;
+    border: 1px solid #767676;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.wpf-progress-bar {
+    width: 160px;
+    height: 18px;
+    accent-color: #06b025;
+}
+
+.wpf-status-bar {
+    display: flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 2px 6px;
+    background: #f0f0f0;
+    border-top: 1px solid #c8c8c8;
+}
+
+.wpf-text-block,
+.text-block {
+    display: block;
+    min-height: 16px;
+    line-height: 16px;
+    color: inherit;
+    white-space: normal;
+}
+
+.wpf-document-viewer,
+.wpf-flow-document-page-viewer,
+.wpf-flow-document-reader,
+.wpf-flow-document-scroll-viewer {
+    overflow: auto;
+    padding: 12px;
+    background: #fff;
+    border: 1px solid #c8c8c8;
+}
+
+.wpf-sticky-note-control {
+    display: inline-block;
+    min-width: 120px;
+    min-height: 80px;
+    padding: 8px;
+    background: #fff8a8;
+    border: 1px solid #d8c95b;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.wpf-rich-text-box {
+    min-width: 160px;
+    min-height: 80px;
+    padding: 4px;
+    overflow: auto;
+    background: #fff;
+    border: 1px solid #abadb3;
+}
+
+.wpf-image {
+    display: inline-block;
+    max-width: 100%;
+    min-width: 16px;
+    min-height: 16px;
+    object-fit: contain;
+}
+
+.wpf-media-element {
+    display: inline-block;
+    max-width: 100%;
+    min-width: 160px;
+    min-height: 90px;
+    background: #111;
+}
+
+.wpf-expander {
+    display: block;
+    border: 1px solid #c8c8c8;
+    background: #fff;
+}
+
+.wpf-expander>summary {
+    padding: 4px 6px;
+    background: #f0f0f0;
+    cursor: default;
+}
+
+.wpf-unknown {
+    display: block;
 }

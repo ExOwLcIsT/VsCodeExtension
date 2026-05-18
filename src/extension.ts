@@ -2,7 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 import { Control } from "./classes/Control";
-import { join } from "path-ts";
+import { join } from "path";
 /**
  *
  * Parses array of strings (original tags spitted by '<')
@@ -20,9 +20,9 @@ function parseArray(arr: { text: string; position: number }[]): Control[] {
   for (let i = 0; i < arr.length; i++) {
     // self-closing tag
     if (arr[i].text.endsWith("/>")) {
-      const control = Control.parse(arr[i].text, arr[i].position, false);
+      const control = Control.parse(arr[i].text, arr[i].position);
 
-      if (control.tagName === "") {
+      if (control.open === "") {
         continue;
       }
       if (controlStack.length === 0) {
@@ -30,12 +30,9 @@ function parseArray(arr: { text: string; position: number }[]): Control[] {
         continue;
       }
       // if RowDefinition, adding row to the table
-      if (control.tagName === 'div class="tr"') {
-        control.isPair = true;
+      if (isGridRow(control)) {
         const table = controlStack[controlStack.length - 1];
-        const rows = table.children.filter((c) =>
-          c.tagName.includes('div class="tr"'),
-        );
+        const rows = table.children.filter((c) => isGridRow(c));
         if (rows.length > 0) {
           control.children = rows[0].children.map((c) => Control.copy(c));
         }
@@ -47,22 +44,19 @@ function parseArray(arr: { text: string; position: number }[]): Control[] {
         continue;
       }
       // if ColumnDefinition, table rows are filled with td
-      if (control.tagName === 'div class="td"') {
-        control.isPair = true;
+      if (isGridCell(control)) {
         const table = controlStack[controlStack.length - 1];
-        if (table.tagName !== 'div class="table"') {
+        if (!isGrid(table)) {
           controlStack.at(controlStack.length - 1)?.children.push(control);
           continue;
         }
-        const rows = table.children.filter(
-          (c) => c.tagName === 'div class="tr"',
-        );
+        const rows = table.children.filter((c) => isGridRow(c));
         if (rows.length === 0) {
-          const row = new Control('div class="tr"', true, -1);
+          const row = new Control('div class="wpf-grid-row tr"', "div", -1);
           table.children.push(row);
         }
         table.children.forEach((c) => {
-          if (c.tagName === 'div class="tr"') {
+          if (isGridRow(c)) {
             c.children.push(Control.copy(control));
           }
         });
@@ -72,43 +66,40 @@ function parseArray(arr: { text: string; position: number }[]): Control[] {
         const table = controlStack[controlStack.length - 1];
 
         //If the element with either Grid.Row or Grid.Column is not in grid, it is put as a child in the container
-        if (table.tagName === 'div class="table"') {
-          const rows = table.children.filter(
-            (c) => c.tagName === 'div class="tr"',
-          );
+        if (isGrid(table)) {
+          const rows = table.children.filter((c) => isGridRow(c));
           if (rows.length === 0) {
-            const row = new Control('div class="tr"', true, 0);
+            const row = new Control('div class="wpf-grid-row tr"', "div", 0);
             rows.push(row);
             table.children.push(rows[0]);
           }
           let row: Control;
-          if (!control.row) {
+          if (control.row === undefined) {
             const emptyRow = rows.find((r) => r.children.length === 0);
             row = emptyRow ? emptyRow : rows[0];
           } else {
-            control.row = Math.min(
-              rows.length,
-              Math.max(0, control.row ? control.row : 0),
-            );
+            control.row = Math.min(rows.length - 1, Math.max(0, control.row));
             row = rows[control.row];
           }
 
-          const columns = row.children.filter(
-            (c) => c.tagName === 'div class="td"',
-          );
+          const columns = row.children.filter((c) => isGridCell(c));
           if (columns.length === 0) {
-            const column = new Control('div class="td"', true, 0);
+            const column = new Control(
+              'div class="wpf-grid-cell td"',
+              "div",
+              0,
+            );
             columns.push(column);
             row.children.push(columns[0]);
           }
           let column: Control;
-          if (!control.column) {
+          if (control.column === undefined) {
             const emptyColumn = columns.find((r) => r.children.length === 0);
             column = emptyColumn ? emptyColumn : columns[0];
           } else {
             control.column = Math.min(
-              columns.length,
-              Math.max(0, control.column ? control.column : 0),
+              columns.length - 1,
+              Math.max(0, control.column),
             );
             column = columns[control.column];
           }
@@ -121,13 +112,13 @@ function parseArray(arr: { text: string; position: number }[]): Control[] {
     } else if (arr[i].text.startsWith("/")) {
       // closing tag
       const closingControl = Control.parse(arr[i].text.slice(1), 0);
-      if (!closingControl.tagName) {
+      if (!closingControl.open) {
         continue;
       }
       const openedControl = controlStack.pop();
       if (
         openedControl === undefined ||
-        openedControl.tagName !== closingControl.tagName
+        openedControl.open !== closingControl.open
       ) {
         throw Error(`Closed unopened tag${arr[i].text}`);
       }
@@ -137,12 +128,9 @@ function parseArray(arr: { text: string; position: number }[]): Control[] {
       }
 
       // if RowDefinition, adding row to the table
-      if (openedControl.tagName === 'div class="tr"') {
-        openedControl.isPair = true;
+      if (isGridRow(openedControl)) {
         const table = controlStack[controlStack.length - 1];
-        const rows = table.children.filter((c) =>
-          c.tagName.includes('div class="tr"'),
-        );
+        const rows = table.children.filter((c) => isGridRow(c));
         if (rows.length > 0) {
           openedControl.children = rows[0].children.map((c) => Control.copy(c));
         }
@@ -154,17 +142,16 @@ function parseArray(arr: { text: string; position: number }[]): Control[] {
         continue;
       }
       // if ColumnDefinition, table rows are filled with td
-      if (openedControl.tagName === 'div class="td"') {
-        openedControl.isPair = true;
+      if (isGridCell(openedControl)) {
         const table = controlStack[controlStack.length - 1];
-        if (table.tagName !== 'div class="table"') {
+        if (!isGrid(table)) {
           controlStack
             .at(controlStack.length - 1)
             ?.children.push(openedControl);
           continue;
         }
         table.children.forEach((c) => {
-          if (c.tagName === 'div class="tr"') {
+          if (isGridRow(c)) {
             c.children.push(Control.copy(openedControl));
           }
         });
@@ -172,42 +159,42 @@ function parseArray(arr: { text: string; position: number }[]): Control[] {
       }
       if (controlStack.length > 1) {
         const table = controlStack[controlStack.length - 1];
-        if (table.tagName === 'div class="table"') {
-          const rows = table.children.filter(
-            (c) => c.tagName === 'div class="tr"',
-          );
+        if (isGrid(table)) {
+          const rows = table.children.filter((c) => isGridRow(c));
           if (rows.length === 0) {
-            const row = new Control('div class="tr"', true, 0);
+            const row = new Control('div class="wpf-grid-row tr"', "div", 0);
             rows.push(row);
             table.children.push(rows[0]);
           }
           let row: Control;
-          if (!openedControl.row) {
+          if (openedControl.row === undefined) {
             const emptyRow = rows.find((r) => r.children.length === 0);
             row = emptyRow ? emptyRow : rows[0];
           } else {
             openedControl.row = Math.min(
-              rows.length,
-              Math.max(0, openedControl.row ? openedControl.row : 0),
+              rows.length - 1,
+              Math.max(0, openedControl.row),
             );
             row = rows[openedControl.row];
           }
-          const columns = row.children.filter(
-            (c) => c.tagName === 'div class="td"',
-          );
+          const columns = row.children.filter((c) => isGridCell(c));
           if (columns.length === 0) {
-            const column = new Control('div class="td"', true, 0);
+            const column = new Control(
+              'div class="wpf-grid-cell td"',
+              "div",
+              0,
+            );
             columns.push(column);
             row.children.push(columns[0]);
           }
           let column: Control;
-          if (!openedControl.column) {
+          if (openedControl.column === undefined) {
             const emptyColumn = columns.find((r) => r.children.length === 0);
             column = emptyColumn ? emptyColumn : columns[0];
           } else {
             openedControl.column = Math.min(
-              columns.length,
-              Math.max(0, openedControl.column ? openedControl.column : 0),
+              columns.length - 1,
+              Math.max(0, openedControl.column),
             );
             column = columns[openedControl.column];
           }
@@ -222,8 +209,8 @@ function parseArray(arr: { text: string; position: number }[]): Control[] {
       const splitted = arr[i].text.split(">");
       const tagPart = splitted[0] + ">";
       const innerTextPart = splitted[1] ? splitted[1] : "";
-      const control = Control.parse(tagPart, arr[i].position, true);
-      if (!control.tagName) {
+      const control = Control.parse(tagPart, arr[i].position);
+      if (!control.open) {
         continue;
       }
       control.innerText = innerTextPart;
@@ -234,6 +221,23 @@ function parseArray(arr: { text: string; position: number }[]): Control[] {
     }
   }
   return controls;
+}
+
+function hasClass(control: Control, className: string): boolean {
+  const match = control.open.match(/class="([^"]*)"/);
+  return match?.[1].split(/\s+/).includes(className) ?? false;
+}
+
+function isGrid(control: Control): boolean {
+  return hasClass(control, "wpf-grid") || hasClass(control, "table");
+}
+
+function isGridRow(control: Control): boolean {
+  return hasClass(control, "wpf-grid-row") || hasClass(control, "tr");
+}
+
+function isGridCell(control: Control): boolean {
+  return hasClass(control, "wpf-grid-cell") || hasClass(control, "td");
 }
 
 class XamlPreviewProvider implements vscode.CustomTextEditorProvider {
