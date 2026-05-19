@@ -75,8 +75,7 @@ function parseArray(arr: { text: string; position: number }[]): Control[] {
           }
           let row: Control;
           if (control.row === undefined) {
-            const emptyRow = rows.find((r) => r.children.length === 0);
-            row = emptyRow ? emptyRow : rows[0];
+            row = rows[0];
           } else {
             control.row = Math.min(rows.length - 1, Math.max(0, control.row));
             row = rows[control.row];
@@ -94,8 +93,7 @@ function parseArray(arr: { text: string; position: number }[]): Control[] {
           }
           let column: Control;
           if (control.column === undefined) {
-            const emptyColumn = columns.find((r) => r.children.length === 0);
-            column = emptyColumn ? emptyColumn : columns[0];
+            column = columns[0];
           } else {
             control.column = Math.min(
               columns.length - 1,
@@ -168,8 +166,7 @@ function parseArray(arr: { text: string; position: number }[]): Control[] {
           }
           let row: Control;
           if (openedControl.row === undefined) {
-            const emptyRow = rows.find((r) => r.children.length === 0);
-            row = emptyRow ? emptyRow : rows[0];
+            row = rows[0];
           } else {
             openedControl.row = Math.min(
               rows.length - 1,
@@ -189,8 +186,7 @@ function parseArray(arr: { text: string; position: number }[]): Control[] {
           }
           let column: Control;
           if (openedControl.column === undefined) {
-            const emptyColumn = columns.find((r) => r.children.length === 0);
-            column = emptyColumn ? emptyColumn : columns[0];
+            column = columns[0];
           } else {
             openedControl.column = Math.min(
               columns.length - 1,

@@ -150,6 +150,9 @@ export class Control {
     this.close = close;
     this.position = position;
   }
+  addChild(child: Control): void {
+    this.children.push(child);
+  }
 
   /**Stringify Control and it`s children elements */
   show(): string {
@@ -259,7 +262,7 @@ export class Control {
           //width.value = "${numberBeforeStar}";
           return;
         }
-        if (width.value === "auto") {
+        if (width.value === "fit-content") {
           child.params.push(new Param("flex-grow", `0`));
           child.params.push(new Param("flex-shrink", `0`));
           return;
