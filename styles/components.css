@@ -42,7 +42,7 @@ textarea {
     margin: 30px;
     overflow: hidden;
     color: #1f1f1f;
-    background: #f1f1f1;
+    background: #f8f8f8;
     border: 1px solid #2a6bbf;
     border-radius: 8px 8px 4px 4px;
     box-shadow:
@@ -59,7 +59,6 @@ textarea {
     height: 32px;
     color: #202020;
     background: #f8f8f8;
-    border-bottom: 1px solid #d9d9d9;
     user-select: none;
 }
 
@@ -152,6 +151,9 @@ textarea {
 }
 
 .wpf-window-content {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     flex: 1 1 auto;
     min-width: 0;
     min-height: 0;
@@ -160,7 +162,20 @@ textarea {
 
 .wpf-window-content>.wpf-grid,
 .wpf-window-content>.table {
-    height: 100%;
+    flex: 1 1 auto;
+    width: auto;
+    max-width: none;
+    height: auto;
+    max-height: none;
+}
+
+.wpf-window-content>.wpf-stack-panel,
+.wpf-window-content>.stackpanel {
+    flex: 1 1 auto;
+    width: auto;
+    max-width: none;
+    height: auto;
+    max-height: none;
 }
 
 .wpf-page {
@@ -219,17 +234,76 @@ textarea {
 
 .wpf-stack-panel>*,
 .stackpanel>* {
-    flex-shrink: 0;
+    flex: 0 0 auto;
+}
+
+.wpf-stack-panel:not([style*="flex-direction:row"])>[data-explicit-width="true"],
+.stackpanel:not([style*="flex-direction:row"])>[data-explicit-width="true"] {
+    align-self: center;
 }
 
 .wpf-stack-panel[style*="flex-direction:row"],
 .stackpanel[style*="flex-direction:row"] {
-    align-items: flex-start;
+    align-items: stretch;
+    align-content: flex-start;
+    width: max-content;
+    max-width: 100%;
+    height: max-content;
+    max-height: 100%;
 }
 
 .wpf-stack-panel[style*="flex-direction:row"]>*,
 .stackpanel[style*="flex-direction:row"]>* {
     flex: 0 0 auto;
+    align-self: auto;
+}
+
+.wpf-stack-panel[style*="flex-direction:row"]>.wpf-button:not([data-explicit-height="true"]),
+.stackpanel[style*="flex-direction:row"]>.wpf-button:not([data-explicit-height="true"]),
+.wpf-stack-panel[style*="flex-direction:row"]>.wpf-repeat-button:not([data-explicit-height="true"]),
+.stackpanel[style*="flex-direction:row"]>.wpf-repeat-button:not([data-explicit-height="true"]) {
+    align-self: stretch;
+    height: auto;
+}
+
+.wpf-stack-panel:not([style*="flex-direction:row"])>[data-wpf-horizontal-alignment="left"],
+.stackpanel:not([style*="flex-direction:row"])>[data-wpf-horizontal-alignment="left"] {
+    align-self: flex-start;
+}
+
+.wpf-stack-panel:not([style*="flex-direction:row"])>[data-wpf-horizontal-alignment="center"],
+.stackpanel:not([style*="flex-direction:row"])>[data-wpf-horizontal-alignment="center"] {
+    align-self: center;
+}
+
+.wpf-stack-panel:not([style*="flex-direction:row"])>[data-wpf-horizontal-alignment="right"],
+.stackpanel:not([style*="flex-direction:row"])>[data-wpf-horizontal-alignment="right"] {
+    align-self: flex-end;
+}
+
+.wpf-stack-panel:not([style*="flex-direction:row"])>[data-wpf-horizontal-alignment="stretch"]:not([data-explicit-width="true"]),
+.stackpanel:not([style*="flex-direction:row"])>[data-wpf-horizontal-alignment="stretch"]:not([data-explicit-width="true"]) {
+    align-self: stretch;
+}
+
+.wpf-stack-panel[style*="flex-direction:row"]>[data-wpf-vertical-alignment="top"],
+.stackpanel[style*="flex-direction:row"]>[data-wpf-vertical-alignment="top"] {
+    align-self: flex-start;
+}
+
+.wpf-stack-panel[style*="flex-direction:row"]>[data-wpf-vertical-alignment="center"],
+.stackpanel[style*="flex-direction:row"]>[data-wpf-vertical-alignment="center"] {
+    align-self: center;
+}
+
+.wpf-stack-panel[style*="flex-direction:row"]>[data-wpf-vertical-alignment="bottom"],
+.stackpanel[style*="flex-direction:row"]>[data-wpf-vertical-alignment="bottom"] {
+    align-self: flex-end;
+}
+
+.wpf-stack-panel[style*="flex-direction:row"]>[data-wpf-vertical-alignment="stretch"]:not([data-explicit-height="true"]),
+.stackpanel[style*="flex-direction:row"]>[data-wpf-vertical-alignment="stretch"]:not([data-explicit-height="true"]) {
+    align-self: stretch;
 }
 
 .wpf-wrap-panel {
@@ -265,19 +339,121 @@ textarea {
 .td {
     display: flex;
     position: relative;
+    align-items: stretch;
+    justify-content: flex-start;
     min-width: 0;
     min-height: 0;
-    overflow: hidden;
-    height: inherit;
+    overflow: visible;
+    height: auto;
+}
+
+.wpf-grid-cell[data-span-placeholder="column"],
+.td[data-span-placeholder="column"] {
+    flex: 0 0 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    overflow: hidden !important;
+}
+
+.wpf-grid-cell[data-span-placeholder="row"],
+.td[data-span-placeholder="row"] {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.wpf-grid-cell>.wpf-text-box,
+.td>.wpf-text-box,
+.wpf-grid-cell>.wpf-password-box,
+.td>.wpf-password-box,
+.wpf-grid-cell>.wpf-combo-box,
+.td>.wpf-combo-box {
+    flex: 1 1 0;
+    width: 0;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.wpf-grid-cell>[data-wpf-horizontal-alignment="left"],
+.td>[data-wpf-horizontal-alignment="left"] {
+    margin-right: auto;
+}
+
+.wpf-grid-cell>[data-wpf-horizontal-alignment="center"],
+.td>[data-wpf-horizontal-alignment="center"] {
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.wpf-grid-cell>[data-wpf-horizontal-alignment="right"],
+.td>[data-wpf-horizontal-alignment="right"] {
+    margin-left: auto;
+}
+
+.wpf-grid-cell>[data-wpf-horizontal-alignment="stretch"]:not([data-explicit-width="true"]),
+.td>[data-wpf-horizontal-alignment="stretch"]:not([data-explicit-width="true"]) {
+    flex: 1 1 auto;
+    width: auto;
+}
+
+.wpf-grid-cell>[data-wpf-vertical-alignment="top"],
+.td>[data-wpf-vertical-alignment="top"] {
+    align-self: flex-start;
+}
+
+.wpf-grid-cell>[data-wpf-vertical-alignment="center"],
+.td>[data-wpf-vertical-alignment="center"] {
+    align-self: center;
+}
+
+.wpf-grid-cell>[data-wpf-vertical-alignment="bottom"],
+.td>[data-wpf-vertical-alignment="bottom"] {
+    align-self: flex-end;
+}
+
+.wpf-grid-cell>[data-wpf-vertical-alignment="stretch"]:not([data-explicit-height="true"]),
+.td>[data-wpf-vertical-alignment="stretch"]:not([data-explicit-height="true"]) {
+    align-self: stretch;
 }
 
 .wpf-group-box {
+    display: block;
     min-width: 0;
+    min-inline-size: 0;
     margin: 4px;
     padding: 10px;
     border: 1px solid #abadb3;
     border-radius: 2px;
     background: #f7f7f7;
+}
+
+.wpf-grid-cell>.wpf-group-box,
+.td>.wpf-group-box {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-self: stretch;
+    width: auto;
+    height: auto;
+}
+
+.wpf-group-box>.wpf-stack-panel[style*="flex-direction:row"],
+.wpf-group-box>.stackpanel[style*="flex-direction:row"] {
+    flex: 1 1 auto;
+    align-items: stretch;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+}
+
+.wpf-group-box>.wpf-stack-panel[style*="flex-direction:row"]>.wpf-button:not([data-explicit-height="true"]),
+.wpf-group-box>.stackpanel[style*="flex-direction:row"]>.wpf-button:not([data-explicit-height="true"]),
+.wpf-group-box>.wpf-stack-panel[style*="flex-direction:row"]>.wpf-repeat-button:not([data-explicit-height="true"]),
+.wpf-group-box>.stackpanel[style*="flex-direction:row"]>.wpf-repeat-button:not([data-explicit-height="true"]) {
+    align-self: stretch;
+    height: auto;
 }
 
 .wpf-separator {
@@ -305,16 +481,30 @@ textarea {
 
 .wpf-button,
 .wpf-repeat-button {
-    width: 100px;
-    height: 31px;
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    align-self: flex-start;
+    justify-content: center;
+    width: auto;
+    height: auto;
     min-width: 75px;
-    min-height: 31px;
+    min-height: 23px;
     padding: 3px 12px;
     color: #1f1f1f;
-    background: linear-gradient(#fefefe, #e5e5e5);
+    background: #dddddd;
     border: 1px solid #adadad;
     border-radius: 2px;
+    line-height: 1.2;
+    text-align: center;
     cursor: default;
+}
+
+.wpf-grid-cell>.wpf-button,
+.td>.wpf-button,
+.wpf-grid-cell>.wpf-repeat-button,
+.td>.wpf-repeat-button {
+    align-self: auto;
 }
 
 .wpf-button:hover,
@@ -373,6 +563,12 @@ textarea {
     width: 13px;
     height: 13px;
     margin: 0 4px 0 0;
+    accent-color: white;
+    border: black 1px solid;
+}
+
+.wpf-check-box-input:checked {
+    border-color: black;
 }
 
 .wpf-combo-box,
@@ -403,6 +599,11 @@ textarea {
 .wpf-text-box,
 .wpf-password-box {
     min-width: 120px;
+}
+
+.wpf-text-box {
+    resize: none;
+    overflow: hidden;
 }
 
 .wpf-slider {
