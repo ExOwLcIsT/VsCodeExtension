@@ -1,15 +1,9 @@
-function transformSize(v: string): string {
-  if (v.includes("*")) {
-    return v;
-  }
-  if (v === "Auto") {
-    return "fit-content";
-  }
-  if (!isNaN(Number(v))) {
-    return v + "px";
-  }
-  return v;
-}
+import {
+  wpfCornerRadiusToCss,
+  wpfSizeToCss,
+  wpfThicknessToCss,
+} from "./wpfValues";
+
 export class Param {
   name: string;
   value: string;
@@ -53,39 +47,39 @@ const paramMappings: { [wpfProp: string]: ParamMapping } = {
     cssName: "width",
     unit: "",
 
-    transform: transformSize,
+    transform: wpfSizeToCss,
   },
   Height: {
     cssName: "height",
     unit: "",
 
-    transform: transformSize,
+    transform: wpfSizeToCss,
   },
   MinWidth: {
     cssName: "min-width",
     unit: "",
-    transform: transformSize,
+    transform: wpfSizeToCss,
   },
   MinHeight: {
     cssName: "min-height",
     unit: "",
 
-    transform: transformSize,
+    transform: wpfSizeToCss,
   },
   MaxWidth: {
     cssName: "max-width",
     unit: "",
 
-    transform: transformSize,
+    transform: wpfSizeToCss,
   },
   MaxHeight: {
     cssName: "max-height",
     unit: "",
 
-    transform: transformSize,
+    transform: wpfSizeToCss,
   },
-  Margin: { cssName: "margin", unit: "", transform: transformSize },
-  Padding: { cssName: "padding", unit: "", transform: transformSize },
+  Margin: { cssName: "margin", unit: "", transform: wpfThicknessToCss },
+  Padding: { cssName: "padding", unit: "", transform: wpfThicknessToCss },
 
   // Alignment
   HorizontalAlignment: {
@@ -134,7 +128,7 @@ const paramMappings: { [wpfProp: string]: ParamMapping } = {
   },
 
   // Typography
-  FontSize: { cssName: "font-size", unit: "", transform: transformSize },
+  FontSize: { cssName: "font-size", unit: "", transform: wpfSizeToCss },
   FontWeight: {
     cssName: "font-weight",
     unit: "",
@@ -180,7 +174,7 @@ const paramMappings: { [wpfProp: string]: ParamMapping } = {
         v
       ] ?? v,
   },
-  LineHeight: { cssName: "line-height", unit: "", transform: transformSize },
+  LineHeight: { cssName: "line-height", unit: "", transform: wpfSizeToCss },
 
   // Color
   Foreground: { cssName: "color", unit: "", transform: wpfColorToCss },
@@ -197,12 +191,12 @@ const paramMappings: { [wpfProp: string]: ParamMapping } = {
   BorderThickness: {
     cssName: "border-width",
     unit: "",
-    transform: transformSize,
+    transform: wpfThicknessToCss,
   },
   CornerRadius: {
     cssName: "border-radius",
     unit: "",
-    transform: transformSize,
+    transform: wpfCornerRadiusToCss,
   },
 
   // Visibility & Opacity
@@ -215,10 +209,10 @@ const paramMappings: { [wpfProp: string]: ParamMapping } = {
   },
 
   // Positioning (Canvas)
-  "Canvas.Left": { cssName: "left", unit: "", transform: transformSize },
-  "Canvas.Top": { cssName: "top", unit: "", transform: transformSize },
-  "Canvas.Right": { cssName: "right", unit: "", transform: transformSize },
-  "Canvas.Bottom": { cssName: "bottom", unit: "", transform: transformSize },
+  "Canvas.Left": { cssName: "left", unit: "", transform: wpfSizeToCss },
+  "Canvas.Top": { cssName: "top", unit: "", transform: wpfSizeToCss },
+  "Canvas.Right": { cssName: "right", unit: "", transform: wpfSizeToCss },
+  "Canvas.Bottom": { cssName: "bottom", unit: "", transform: wpfSizeToCss },
   "Canvas.ZIndex": { cssName: "z-index", unit: "" },
 
   // Flex (StackPanel)

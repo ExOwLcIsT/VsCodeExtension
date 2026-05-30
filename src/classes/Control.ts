@@ -1,4 +1,3 @@
-import { ColorThemeKind } from "vscode";
 import { Param } from "./Param";
 import { styleKeyToClassName } from "./Style";
 
@@ -35,6 +34,7 @@ const blanks: { [id: string]: BlankEntry } = {
   Thumb: { open: 'div class="wpf-thumb"', close: "div" },
   Viewbox: { open: "", close: "" },
   VirtualizingStackPanel: { open: "", close: "" },
+  UniformGrid: { open: 'div class="wpf-uniform-grid"', close: "div" },
   Window: { open: 'div class="wpf-window window"', close: "div" },
   WrapPanel: { open: 'div class="wpf-wrap-panel"', close: "div" },
   Button: { open: 'button class="wpf-button"', close: "button" },
@@ -49,11 +49,14 @@ const blanks: { [id: string]: BlankEntry } = {
   ToolBar: { open: "", close: "" },
   CheckBox: { open: 'label class="wpf-check-box"', close: "label" },
   ComboBox: { open: 'select class="wpf-combo-box"', close: "select" },
-  ListBox: { open: 'select class="wpf-list-box"', close: "select" },
+  ComboBoxItem: { open: "option", close: "option" },
+  ListBox: { open: 'div class="wpf-list-box"', close: "div" },
+  ListBoxItem: { open: 'div class="wpf-list-box-item"', close: "div" },
   RadioButton: {
-    open: 'input class="wpf-radio-button" type="radio"',
-    close: "",
+    open: 'label class="wpf-radio-button"',
+    close: "label",
   },
+  Rectangle: { open: 'div class="wpf-rectangle"', close: "div" },
   Slider: { open: 'input class="wpf-slider" type="range"', close: "" },
   Frame: { open: 'iframe class="wpf-frame"', close: "iframe" },
   Hyperlink: { open: 'a class="wpf-hyperlink"', close: "a" },
@@ -90,7 +93,7 @@ const blanks: { [id: string]: BlankEntry } = {
     open: 'div class="wpf-sticky-note-control"',
     close: "div",
   },
-  TextBox: { open: 'textarea class="wpf-text-box" rows="1"', close: "textarea" },
+  TextBox: { open: 'input class="wpf-text-box" type="text"', close: "" },
   RichTextBox: { open: 'div class="wpf-rich-text-box"', close: "div" },
   PasswordBox: {
     open: 'input class="wpf-password-box" type="password"',
@@ -128,6 +131,33 @@ function isCheckBox(control: Control): boolean {
   return hasClass(control, "wpf-check-box");
 }
 
+function isRadioButton(control: Control): boolean {
+  return hasClass(control, "wpf-radio-button");
+}
+
+function getBlankEntry(block: string, attributes: Record<string, string>): BlankEntry {
+  if (block === "TextBox") {
+    return shouldUseTextArea(attributes)
+      ? { open: 'textarea class="wpf-text-box" rows="1"', close: "textarea" }
+      : blanks.TextBox;
+  }
+
+  return (
+    blanks[block] ?? {
+      open: 'div class="wpf-unknown"',
+      close: "div",
+    }
+  );
+}
+
+function shouldUseTextArea(attributes: Record<string, string>): boolean {
+  const acceptsReturn = attributes.AcceptsReturn === "True";
+  const wraps =
+    attributes.TextWrapping !== undefined && attributes.TextWrapping !== "NoWrap";
+
+  return acceptsReturn || wraps;
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -157,29 +187,65 @@ function getStyleResourceKey(value: string): string | undefined {
   return match?.[1].trim();
 }
 
-function setParam(control: Control, name: string, value: string): void {
-  const param = control.params.find((currentParam) => currentParam.name === name);
-  if (param) {
-    param.value = value;
-    return;
+function parseAttributes(tag: string): Record<string, string> {
+  const attributes: Record<string, string> = {};
+  const attributeRegex = /([\w:.]+)\s*=\s*"([^"]*)"/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = attributeRegex.exec(tag)) !== null) {
+    attributes[match[1]] = match[2];
   }
 
-  control.params.push(new Param(name, value));
+  return attributes;
 }
 
-function getStarValue(value: string): number {
-  if (!value.includes("*")) {
-    return 0;
-  }
-
-  const numberBeforeStar = value.substring(0, value.indexOf("*"));
-  if (!numberBeforeStar) {
-    return 1;
-  }
-
-  const parsed = Number.parseFloat(numberBeforeStar);
-  return Number.isNaN(parsed) ? 1 : parsed;
+function getParamValue(control: Control | undefined, name: string): string | undefined {
+  return control?.params.find((param) => param.name === name)?.value;
 }
+
+function gridDefinitionValue(
+  control: Control | undefined,
+  property: "width" | "height",
+): string {
+  return getParamValue(control, property) ?? "1fr";
+}
+
+function getGridRows(control: Control): Control[] {
+  return control.children.filter((child) => isGridRow(child));
+}
+
+function getGridCells(control: Control): Control[] {
+  return control.children.filter((child) => isGridCell(child));
+}
+
+function getColumnDefinitions(grid: Control): Array<Control | undefined> {
+  const definitions: Array<Control | undefined> = [];
+
+  getGridRows(grid).forEach((row) => {
+    getGridCells(row).forEach((cell, index) => {
+      const column = cell.column ?? index;
+      definitions[column] ??= cell;
+    });
+  });
+
+  return definitions.length > 0 ? definitions : [undefined];
+}
+
+function getRowDefinitions(grid: Control): Array<Control | undefined> {
+  const rows = getGridRows(grid);
+  return rows.length > 0 ? rows : [undefined];
+}
+
+function shouldSkipAttribute(paramName: string): boolean {
+  return (
+    paramName === "AcceptsReturn" ||
+    paramName === "x:Class" ||
+    paramName === "mc:Ignorable" ||
+    paramName.startsWith("xmlns") ||
+    paramName.startsWith("d:")
+  );
+}
+
 /**Class for WPF Control converted into HTML element */
 export class Control {
   open: string = "div";
@@ -198,10 +264,12 @@ export class Control {
   hasExplicitHeight: boolean = false;
   horizontalAlignment?: string;
   verticalAlignment?: string;
-  constructor(open: string, close: string, position: number) {
+  type: string = "";
+  constructor(open: string, close: string, position: number, type: string = "") {
     this.open = open;
     this.close = close;
     this.position = position;
+    this.type = type;
   }
   addChild(child: Control): void {
     this.children.push(child);
@@ -212,11 +280,44 @@ export class Control {
     if (this.open === "") {
       return "";
     }
+
+    if (isGrid(this)) {
+      return this.showGrid();
+    }
+
+    const attributes = this.getAttributes();
+    const innerHtml = `${this.innerText}${this.children.map((p) => p.show()).join("")}`;
+    if (isCheckBox(this)) {
+      const result = `<${this.open} ${attributes}>${this.children.map((p) => p.show()).join("")}${this.innerText}</${this.close}>`;
+      return result;
+    }
+    if (isRadioButton(this)) {
+      const result = `<${this.open} ${attributes}>${this.children.map((p) => p.show()).join("")}${this.innerText}</${this.close}>`;
+      return result;
+    }
+    if (isWindow(this)) {
+      const title = escapeHtml(this.title || "Window");
+      const result = `<${this.open} ${attributes}><div class="wpf-window-title-bar"><div class="wpf-window-icon"></div><div class="wpf-window-title">${title}</div><div class="wpf-window-controls" aria-hidden="true"><span class="wpf-window-control wpf-window-minimize"></span><span class="wpf-window-control wpf-window-maximize"></span><span class="wpf-window-control wpf-window-close"></span></div></div><div class="wpf-window-content">${innerHtml}</div></${this.close}>`;
+      return result;
+    }
+    const result = `<${this.open} ${attributes}${this.close ? `>${innerHtml}</${this.close}` : "/"}>`;
+    return result;
+  }
+
+  private getAttributes(
+    extraStyles: string[] = [],
+    ignoredParamNames: Set<string> = new Set(),
+  ): string {
+    const styleParts = [
+      ...this.params
+        .filter((param) => !ignoredParamNames.has(param.name))
+        .map((param) => param.show()),
+      ...extraStyles,
+    ];
     const styles =
-      this.params.length === 0
-        ? ""
-        : `style="${this.params.map((p) => p.show()).join(" ")}"`;
-    const attributes = [
+      styleParts.length === 0 ? "" : `style="${styleParts.join(" ")}"`;
+
+    return [
       `data-position="${this.position}"`,
       this.row !== undefined ? `data-grid-row="${this.row}"` : "",
       this.column !== undefined ? `data-grid-column="${this.column}"` : "",
@@ -237,140 +338,109 @@ export class Control {
     ]
       .filter(Boolean)
       .join(" ");
-    if (isGrid(this)) {
-      this.children.forEach((child) => {
-        const height: Param | undefined = child.params.find(
-          (p) => p.name === "height",
-        );
-        if (!height) {
-          setParam(child, "height", "auto");
-          setParam(child, "flex", "1 1 0");
-          return;
-        }
-        if (height.value.includes("*")) {
-          const star = getStarValue(height.value);
-          height.value = "auto";
-          setParam(child, "flex", `${star} 1 0`);
-          return;
-        }
-        if (height.value === "fit-content") {
-          height.value = "auto";
-          setParam(child, "flex", "0 0 auto");
-          return;
-        }
-        setParam(child, "flex", `0 0 ${height.value}`);
-      });
+  }
+
+  private showGrid(): string {
+    const columns = getColumnDefinitions(this)
+      .map((column) => gridDefinitionValue(column, "width"))
+      .join(" ");
+    const rows = getRowDefinitions(this)
+      .map((row) => gridDefinitionValue(row, "height"))
+      .join(" ");
+    const attributes = this.getAttributes([
+      `grid-template-columns:${columns};`,
+      `grid-template-rows:${rows};`,
+    ]);
+    const innerHtml = getGridRows(this)
+      .flatMap((row, rowIndex) =>
+        getGridCells(row).map((cell, columnIndex) =>
+          this.showGridCell(cell, rowIndex, columnIndex),
+        ),
+      )
+      .join("");
+
+    return `<${this.open} ${attributes}>${innerHtml}</${this.close}>`;
+  }
+
+  private showGridCell(
+    cell: Control,
+    rowIndex: number,
+    columnIndex: number,
+  ): string {
+    if (cell.spanPlaceholder || cell.children.length === 0) {
+      return "";
     }
-    if (isGridRow(this)) {
-      let defined: number = 0;
-      let stars: number = 0;
-      this.children.forEach((child) => {
-        if (child.spanPlaceholder === "column") {
-          return;
-        }
-        const columnSpan = Math.max(1, child.columnSpan);
-        const width: Param | undefined = child.params.find(
-          (p) => p.name === "width",
-        );
-        if (!width) {
-          stars += columnSpan;
-        } else {
-          if (width.value.includes("*")) {
-            const numberBeforeStar: string = width.value.substring(
-              0,
-              width.value.indexOf("*"),
-            );
-            if (!numberBeforeStar) {
-              stars += columnSpan;
-            } else {
-              stars += Number.parseFloat(numberBeforeStar) * columnSpan;
-            }
-          } else {
-            const int = Number.parseInt(width.value);
-            if (!Number.isNaN(int)) {
-              defined += int;
-            }
-          }
-        }
-      });
-      this.children.forEach((child) => {
-        if (child.spanPlaceholder === "column") {
-          child.params.push(new Param("width", "0"));
-          child.params.push(new Param("min-width", "0"));
-          child.params.push(new Param("flex", "0 0 0"));
-          return;
-        }
-        const columnSpan = Math.max(1, child.columnSpan);
-        const width: Param | undefined = child.params.find(
-          (p) => p.name === "width",
-        );
-        if (!width) {
-          child.params.push(new Param("flex", `${columnSpan}`));
-          return;
-        }
-        if (width.value.includes("*")) {
-          let numberBeforeStar: string = width.value.substring(
-            0,
-            width.value.indexOf("*"),
-          );
-          if (!numberBeforeStar) {
-            numberBeforeStar = "1";
-          }
-          // width.name = "flex";
-          width.value = `calc((100% - ${defined}px)/${stars} * ${
-            Number.parseFloat(numberBeforeStar) * columnSpan
-          })`;
-          //width.value = "${numberBeforeStar}";
-          return;
-        }
-        if (width.value === "fit-content") {
-          child.params.push(new Param("flex-grow", `0`));
-          child.params.push(new Param("flex-shrink", `0`));
-          return;
-        }
-      });
-    }
-    const innerHtml = `${this.innerText}${this.children.map((p) => p.show()).join("")}`;
-    if (isCheckBox(this)) {
-      const result = `<${this.open} ${attributes}>${this.children.map((p) => p.show()).join("")}${this.innerText}</${this.close}>`;
-      return result;
-    }
-    if (isWindow(this)) {
-      const title = escapeHtml(this.title || "Window");
-      const result = `<${this.open} ${attributes}><div class="wpf-window-title-bar"><div class="wpf-window-icon"></div><div class="wpf-window-title">${title}</div><div class="wpf-window-controls" aria-hidden="true"><span class="wpf-window-control wpf-window-minimize"></span><span class="wpf-window-control wpf-window-maximize"></span><span class="wpf-window-control wpf-window-close"></span></div></div><div class="wpf-window-content">${innerHtml}</div></${this.close}>`;
-      return result;
-    }
-    const result = `<${this.open} ${attributes}${this.close ? `>${innerHtml}</${this.close}` : "/"}>`;
-    return result;
+
+    const row = (cell.row ?? rowIndex) + 1;
+    const column = (cell.column ?? columnIndex) + 1;
+    const attributes = cell.getAttributes(
+      [
+        `grid-row:${row} / span ${Math.max(1, cell.rowSpan)};`,
+        `grid-column:${column} / span ${Math.max(1, cell.columnSpan)};`,
+      ],
+      new Set([
+        "width",
+        "height",
+        "min-width",
+        "flex",
+        "flex-grow",
+        "flex-shrink",
+      ]),
+    );
+    const innerHtml = `${cell.innerText}${cell.children
+      .map((child) => child.show())
+      .join("")}`;
+
+    return `<${cell.open} ${attributes}>${innerHtml}</${cell.close}>`;
   }
 
   /**
    * Parses string into Control object
    * */
   static parse(s: string, position: number): Control {
-    s = s.replace("<", "").replace(">", "").replace("/", "");
-    const splitted =
-      s.match(/(?:[^\s"]+|"[^"]*")+/g)?.map((x) => x.trim()) ?? [];
-    const block = splitted[0];
+    const normalized = s
+      .trim()
+      .replace(/^</, "")
+      .replace(/\/?>$/, "")
+      .trim();
+    const block = normalized.match(/^([^\s>/]+)/)?.[1] ?? "";
+    const attributes = parseAttributes(normalized);
+    const tag: BlankEntry = getBlankEntry(block, attributes);
 
-    let tag: BlankEntry = blanks[block] ?? {
-      open: 'div class="wpf-unknown"',
-      close: "div",
-    };
-
-    const control: Control = new Control(tag.open, tag.close, position);
+    const control: Control = new Control(tag.open, tag.close, position, block);
     if (block === "CheckBox") {
       control.children.push(
-        new Control('input class="wpf-check-box-input" type="checkbox"', "", 0),
+        new Control(
+          'input class="wpf-check-box-input" type="checkbox"',
+          "",
+          0,
+          "CheckBox.Input",
+        ),
       );
     }
-    for (let i = 1; i < splitted.length; i++) {
-      if (!splitted[i]) {
+    if (block === "RadioButton") {
+      control.children.push(
+        new Control(
+          'input class="wpf-radio-button-input" type="radio"',
+          "",
+          0,
+          "RadioButton.Input",
+        ),
+      );
+    }
+    if (block === "StackPanel") {
+      control.open = addClassToOpenTag(
+        control.open,
+        attributes.Orientation === "Horizontal"
+          ? "wpf-stack-panel-horizontal"
+          : "wpf-stack-panel-vertical",
+      );
+    }
+
+    for (const [paramName, paramValue] of Object.entries(attributes)) {
+      if (shouldSkipAttribute(paramName)) {
         continue;
       }
-
-      const paramName: string = splitted[i].split("=")[0];
-      const paramValue: string = splitted[i].split("=")[1].split('"')[1];
       if (paramName === "Content") {
         control.innerText = paramValue;
         continue;
@@ -392,6 +462,19 @@ export class Control {
       if (block === "CheckBox" && paramName === "IsChecked") {
         if (paramValue === "True" || paramValue === "true") {
           control.children[0].open += " checked";
+        }
+        continue;
+      }
+      if (block === "RadioButton" && paramName === "IsChecked") {
+        if (paramValue === "True" || paramValue === "true") {
+          control.children[0].open += " checked";
+          control.open = addClassToOpenTag(control.open, "wpf-checked");
+        }
+        continue;
+      }
+      if (block === "ComboBoxItem" && paramName === "IsSelected") {
+        if (paramValue === "True" || paramValue === "true") {
+          control.open += " selected";
         }
         continue;
       }
@@ -434,6 +517,17 @@ export class Control {
         control.verticalAlignment = paramValue;
         continue;
       }
+      if (paramName === "Orientation") {
+        continue;
+      }
+      if (block === "UniformGrid" && paramName === "Columns") {
+        control.params.push(new Param("--wpf-uniform-columns", paramValue));
+        continue;
+      }
+      if (block === "UniformGrid" && paramName === "Rows") {
+        control.params.push(new Param("--wpf-uniform-rows", paramValue));
+        continue;
+      }
       const param: Param = new Param(
         paramName.split(".")[paramName.split(".").length - 1],
         paramValue,
@@ -456,6 +550,7 @@ export class Control {
     control.hasExplicitHeight = other.hasExplicitHeight;
     control.horizontalAlignment = other.horizontalAlignment;
     control.verticalAlignment = other.verticalAlignment;
+    control.type = other.type;
     return control;
   }
 }

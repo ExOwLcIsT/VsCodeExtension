@@ -21,6 +21,7 @@ function parseArray(arr: { text: string; position: number }[]): ParseResult {
   const controlStack: Control[] = []; // Stack of WPF controls to keep track of unclosed tags
   const styles: Style[] = []; // WPF tags for styling, converted to css
   const styleStack: Style[] = []; // Stack of WPF styling tags to keep track of unclosed ones
+  let ignoredStyleDepth = 0;
   // Keeps track on unclosed tags
   // on pop pushes children of previous tag
   // or if it`s first element of stack, the control is pushed to controls array
@@ -29,6 +30,9 @@ function parseArray(arr: { text: string; position: number }[]): ParseResult {
     const tagName = getTagName(arr[i].text);
     // self-closing tag (<TextBox/>)
     if (arr[i].text.endsWith("/>")) {
+      if (styleStack.length > 0 && ignoredStyleDepth > 0) {
+        continue;
+      }
       if (isSetterTag(tagName)) {
         const property = Style.parseSetter(arr[i].text);
         const style = styleStack.at(styleStack.length - 1);
@@ -42,6 +46,9 @@ function parseArray(arr: { text: string; position: number }[]): ParseResult {
         continue;
       }
       if (isResourceTag(tagName)) {
+        continue;
+      }
+      if (styleStack.length > 0) {
         continue;
       }
 
@@ -70,14 +77,11 @@ function parseArray(arr: { text: string; position: number }[]): ParseResult {
         addGridColumnDefinition(table, control);
         continue;
       }
-      if (controlStack.length > 1) {
-        const table = controlStack[controlStack.length - 1];
-
-        //If the element with either Grid.Row or Grid.Column is not in grid, it is put as a child in the container
-        if (isGrid(table)) {
-          placeControlInGrid(table, control);
-          continue;
-        }
+      const parentControl = controlStack.at(controlStack.length - 1);
+      //If the element with either Grid.Row or Grid.Column is not in grid, it is put as a child in the container
+      if (parentControl && isGrid(parentControl)) {
+        placeControlInGrid(parentControl, control);
+        continue;
       }
 
       controlStack.at(controlStack.length - 1)?.children.push(control);
@@ -86,6 +90,12 @@ function parseArray(arr: { text: string; position: number }[]): ParseResult {
         const style = styleStack.pop();
         if (style) {
           styles.push(style);
+        }
+        continue;
+      }
+      if (styleStack.length > 0) {
+        if (!isSetterTag(tagName) && ignoredStyleDepth > 0) {
+          ignoredStyleDepth--;
         }
         continue;
       }
@@ -109,7 +119,7 @@ function parseArray(arr: { text: string; position: number }[]): ParseResult {
       const openedControl = controlStack.pop();
       if (
         openedControl === undefined ||
-        openedControl.open !== closingControl.open
+        openedControl.type !== closingControl.type
       ) {
         throw Error(`Closed unopened tag${arr[i].text}`);
       }
@@ -136,12 +146,10 @@ function parseArray(arr: { text: string; position: number }[]): ParseResult {
         addGridColumnDefinition(table, openedControl);
         continue;
       }
-      if (controlStack.length > 1) {
-        const table = controlStack[controlStack.length - 1];
-        if (isGrid(table)) {
-          placeControlInGrid(table, openedControl);
-          continue;
-        }
+      const parentControl = controlStack.at(controlStack.length - 1);
+      if (parentControl && isGrid(parentControl)) {
+        placeControlInGrid(parentControl, openedControl);
+        continue;
       }
 
       controlStack.at(controlStack.length - 1)?.children.push(openedControl);
@@ -151,6 +159,10 @@ function parseArray(arr: { text: string; position: number }[]): ParseResult {
         continue;
       }
       if (isSetterTag(tagName) || isResourceTag(tagName)) {
+        continue;
+      }
+      if (styleStack.length > 0) {
+        ignoredStyleDepth++;
         continue;
       }
 
@@ -166,6 +178,9 @@ function parseArray(arr: { text: string; position: number }[]): ParseResult {
       controlStack.push(control);
     } else // text in tag (<TextBlock>Text in tag</TextBlock>)
     {
+      if (styleStack.length > 0) {
+        continue;
+      }
       controlStack[controlStack.length - 1].innerText = arr[i].text;
     }
   }
@@ -373,6 +388,10 @@ function createGridCell(column: number, template?: Control): Control {
   cell.rowSpan = 1;
   cell.columnSpan = 1;
   cell.spanPlaceholder = "";
+  cell.hasExplicitWidth = false;
+  cell.hasExplicitHeight = false;
+  cell.horizontalAlignment = undefined;
+  cell.verticalAlignment = undefined;
   return cell;
 }
 
@@ -445,7 +464,7 @@ class XamlPreviewProvider implements vscode.CustomTextEditorProvider {
             viewColumn: vscode.ViewColumn.One,
             selection: range,
           });
-        } catch (err) {
+        } catch (err) { 
           const message = err;
         }
       },
@@ -468,9 +487,9 @@ class XamlPreviewProvider implements vscode.CustomTextEditorProvider {
         const { controls, styles } = parseArray(arr);
 
         const xaml = controls.map((c) => c.show()).join("\n");
-        const css = styles.map((style) => style.toString()).join("\n");
+        const css = styles.map((style) => style.toString(styles)).join("\n");
         webviewPanel.webview.postMessage({
-          xaml: `${xaml}<xmp>${xaml}</xmp>`,
+          xaml,
           styles: css,
         });
       } catch (error) {

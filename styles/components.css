@@ -201,8 +201,46 @@ textarea {
 }
 
 .wpf-border {
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-start;
+    min-width: 0;
+    min-height: 0;
     border: 1px solid #abadb3;
     background: transparent;
+}
+
+.wpf-border>[data-wpf-horizontal-alignment="center"] {
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.wpf-border>[data-wpf-horizontal-alignment="right"] {
+    margin-left: auto;
+}
+
+.wpf-border>[data-wpf-vertical-alignment="top"] {
+    align-self: flex-start;
+}
+
+.wpf-border>[data-wpf-vertical-alignment="center"] {
+    align-self: center;
+}
+
+.wpf-border>[data-wpf-vertical-alignment="bottom"] {
+    align-self: flex-end;
+}
+
+.wpf-border> :not([data-explicit-width="true"]):not([data-wpf-horizontal-alignment="left"]):not([data-wpf-horizontal-alignment="center"]):not([data-wpf-horizontal-alignment="right"]) {
+    flex: 1 1 auto;
+    width: auto;
+    max-width: none;
+}
+
+.wpf-border> :not([data-explicit-height="true"]):not([data-wpf-vertical-alignment="top"]):not([data-wpf-vertical-alignment="center"]):not([data-wpf-vertical-alignment="bottom"]) {
+    align-self: stretch;
+    height: auto;
+    max-height: none;
 }
 
 .wpf-canvas {
@@ -224,7 +262,6 @@ textarea {
 .wpf-stack-panel,
 .stackpanel {
     display: flex;
-    flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
     gap: 0;
@@ -232,18 +269,25 @@ textarea {
     min-height: 0;
 }
 
+.wpf-stack-panel-vertical {
+    flex-direction: column;
+}
+
 .wpf-stack-panel>*,
 .stackpanel>* {
     flex: 0 0 auto;
 }
 
-.wpf-stack-panel:not([style*="flex-direction:row"])>[data-explicit-width="true"],
-.stackpanel:not([style*="flex-direction:row"])>[data-explicit-width="true"] {
+.wpf-stack-panel-vertical>[data-explicit-width="true"],
+.wpf-stack-panel:not(.wpf-stack-panel-horizontal)>[data-explicit-width="true"],
+.stackpanel:not(.wpf-stack-panel-horizontal)>[data-explicit-width="true"] {
     align-self: center;
 }
 
+.wpf-stack-panel-horizontal,
 .wpf-stack-panel[style*="flex-direction:row"],
 .stackpanel[style*="flex-direction:row"] {
+    flex-direction: row;
     align-items: stretch;
     align-content: flex-start;
     width: max-content;
@@ -252,12 +296,15 @@ textarea {
     max-height: 100%;
 }
 
+.wpf-stack-panel-horizontal>*,
 .wpf-stack-panel[style*="flex-direction:row"]>*,
 .stackpanel[style*="flex-direction:row"]>* {
     flex: 0 0 auto;
     align-self: auto;
 }
 
+.wpf-stack-panel-horizontal>.wpf-button:not([data-explicit-height="true"]),
+.wpf-stack-panel-horizontal>.wpf-repeat-button:not([data-explicit-height="true"]),
 .wpf-stack-panel[style*="flex-direction:row"]>.wpf-button:not([data-explicit-height="true"]),
 .stackpanel[style*="flex-direction:row"]>.wpf-button:not([data-explicit-height="true"]),
 .wpf-stack-panel[style*="flex-direction:row"]>.wpf-repeat-button:not([data-explicit-height="true"]),
@@ -266,41 +313,49 @@ textarea {
     height: auto;
 }
 
-.wpf-stack-panel:not([style*="flex-direction:row"])>[data-wpf-horizontal-alignment="left"],
-.stackpanel:not([style*="flex-direction:row"])>[data-wpf-horizontal-alignment="left"] {
+.wpf-stack-panel-vertical>[data-wpf-horizontal-alignment="left"],
+.wpf-stack-panel:not(.wpf-stack-panel-horizontal)>[data-wpf-horizontal-alignment="left"],
+.stackpanel:not(.wpf-stack-panel-horizontal)>[data-wpf-horizontal-alignment="left"] {
     align-self: flex-start;
 }
 
-.wpf-stack-panel:not([style*="flex-direction:row"])>[data-wpf-horizontal-alignment="center"],
-.stackpanel:not([style*="flex-direction:row"])>[data-wpf-horizontal-alignment="center"] {
+.wpf-stack-panel-vertical>[data-wpf-horizontal-alignment="center"],
+.wpf-stack-panel:not(.wpf-stack-panel-horizontal)>[data-wpf-horizontal-alignment="center"],
+.stackpanel:not(.wpf-stack-panel-horizontal)>[data-wpf-horizontal-alignment="center"] {
     align-self: center;
 }
 
-.wpf-stack-panel:not([style*="flex-direction:row"])>[data-wpf-horizontal-alignment="right"],
-.stackpanel:not([style*="flex-direction:row"])>[data-wpf-horizontal-alignment="right"] {
+.wpf-stack-panel-vertical>[data-wpf-horizontal-alignment="right"],
+.wpf-stack-panel:not(.wpf-stack-panel-horizontal)>[data-wpf-horizontal-alignment="right"],
+.stackpanel:not(.wpf-stack-panel-horizontal)>[data-wpf-horizontal-alignment="right"] {
     align-self: flex-end;
 }
 
-.wpf-stack-panel:not([style*="flex-direction:row"])>[data-wpf-horizontal-alignment="stretch"]:not([data-explicit-width="true"]),
-.stackpanel:not([style*="flex-direction:row"])>[data-wpf-horizontal-alignment="stretch"]:not([data-explicit-width="true"]) {
+.wpf-stack-panel-vertical>[data-wpf-horizontal-alignment="stretch"]:not([data-explicit-width="true"]),
+.wpf-stack-panel:not(.wpf-stack-panel-horizontal)>[data-wpf-horizontal-alignment="stretch"]:not([data-explicit-width="true"]),
+.stackpanel:not(.wpf-stack-panel-horizontal)>[data-wpf-horizontal-alignment="stretch"]:not([data-explicit-width="true"]) {
     align-self: stretch;
 }
 
+.wpf-stack-panel-horizontal>[data-wpf-vertical-alignment="top"],
 .wpf-stack-panel[style*="flex-direction:row"]>[data-wpf-vertical-alignment="top"],
 .stackpanel[style*="flex-direction:row"]>[data-wpf-vertical-alignment="top"] {
     align-self: flex-start;
 }
 
+.wpf-stack-panel-horizontal>[data-wpf-vertical-alignment="center"],
 .wpf-stack-panel[style*="flex-direction:row"]>[data-wpf-vertical-alignment="center"],
 .stackpanel[style*="flex-direction:row"]>[data-wpf-vertical-alignment="center"] {
     align-self: center;
 }
 
+.wpf-stack-panel-horizontal>[data-wpf-vertical-alignment="bottom"],
 .wpf-stack-panel[style*="flex-direction:row"]>[data-wpf-vertical-alignment="bottom"],
 .stackpanel[style*="flex-direction:row"]>[data-wpf-vertical-alignment="bottom"] {
     align-self: flex-end;
 }
 
+.wpf-stack-panel-horizontal>[data-wpf-vertical-alignment="stretch"]:not([data-explicit-height="true"]),
 .wpf-stack-panel[style*="flex-direction:row"]>[data-wpf-vertical-alignment="stretch"]:not([data-explicit-height="true"]),
 .stackpanel[style*="flex-direction:row"]>[data-wpf-vertical-alignment="stretch"]:not([data-explicit-height="true"]) {
     align-self: stretch;
@@ -316,8 +371,9 @@ textarea {
 .wpf-grid,
 .wpf-data-grid,
 .table {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    align-content: start;
+    justify-content: start;
     width: 100%;
     height: 100%;
     min-width: 0;
@@ -328,11 +384,7 @@ textarea {
 
 .wpf-grid-row,
 .tr {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    min-width: 0;
-    min-height: 0;
+    display: contents;
 }
 
 .wpf-grid-cell,
@@ -345,6 +397,25 @@ textarea {
     min-height: 0;
     overflow: visible;
     height: auto;
+}
+
+.wpf-grid-cell>.wpf-grid,
+.td>.wpf-grid,
+.wpf-grid-cell>.table,
+.td>.table,
+.wpf-grid-cell>.wpf-border,
+.td>.wpf-border,
+.wpf-grid-cell>.wpf-list-box,
+.td>.wpf-list-box,
+.wpf-grid-cell>.wpf-uniform-grid,
+.td>.wpf-uniform-grid,
+.wpf-border>.wpf-grid,
+.wpf-border>.table {
+    flex: 1 1 auto;
+    width: auto;
+    max-width: none;
+    height: auto;
+    max-height: none;
 }
 
 .wpf-grid-cell[data-span-placeholder="column"],
@@ -363,16 +434,31 @@ textarea {
     pointer-events: none;
 }
 
-.wpf-grid-cell>.wpf-text-box,
-.td>.wpf-text-box,
-.wpf-grid-cell>.wpf-password-box,
-.td>.wpf-password-box,
-.wpf-grid-cell>.wpf-combo-box,
-.td>.wpf-combo-box {
+.wpf-grid-cell>.wpf-text-box:not([data-explicit-width="true"]):not([data-wpf-horizontal-alignment="left"]):not([data-wpf-horizontal-alignment="center"]):not([data-wpf-horizontal-alignment="right"]),
+.td>.wpf-text-box:not([data-explicit-width="true"]):not([data-wpf-horizontal-alignment="left"]):not([data-wpf-horizontal-alignment="center"]):not([data-wpf-horizontal-alignment="right"]),
+.wpf-grid-cell>.wpf-password-box:not([data-explicit-width="true"]):not([data-wpf-horizontal-alignment="left"]):not([data-wpf-horizontal-alignment="center"]):not([data-wpf-horizontal-alignment="right"]),
+.td>.wpf-password-box:not([data-explicit-width="true"]):not([data-wpf-horizontal-alignment="left"]):not([data-wpf-horizontal-alignment="center"]):not([data-wpf-horizontal-alignment="right"]),
+.wpf-grid-cell>.wpf-combo-box:not([data-explicit-width="true"]):not([data-wpf-horizontal-alignment="left"]):not([data-wpf-horizontal-alignment="center"]):not([data-wpf-horizontal-alignment="right"]),
+.td>.wpf-combo-box:not([data-explicit-width="true"]):not([data-wpf-horizontal-alignment="left"]):not([data-wpf-horizontal-alignment="center"]):not([data-wpf-horizontal-alignment="right"]) {
     flex: 1 1 0;
     width: 0;
     min-width: 0;
     max-width: 100%;
+}
+
+.wpf-grid-cell> :not([data-explicit-width="true"]):not([data-wpf-horizontal-alignment="left"]):not([data-wpf-horizontal-alignment="center"]):not([data-wpf-horizontal-alignment="right"]),
+.td> :not([data-explicit-width="true"]):not([data-wpf-horizontal-alignment="left"]):not([data-wpf-horizontal-alignment="center"]):not([data-wpf-horizontal-alignment="right"]) {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+}
+
+.wpf-grid-cell> :not([data-explicit-height="true"]):not([data-wpf-vertical-alignment="top"]):not([data-wpf-vertical-alignment="center"]):not([data-wpf-vertical-alignment="bottom"]),
+.td> :not([data-explicit-height="true"]):not([data-wpf-vertical-alignment="top"]):not([data-wpf-vertical-alignment="center"]):not([data-wpf-vertical-alignment="bottom"]) {
+    align-self: stretch;
+    height: auto;
+    max-height: none;
 }
 
 .wpf-grid-cell>[data-wpf-horizontal-alignment="left"],
@@ -438,6 +524,7 @@ textarea {
     height: auto;
 }
 
+.wpf-group-box>.wpf-stack-panel-horizontal,
 .wpf-group-box>.wpf-stack-panel[style*="flex-direction:row"],
 .wpf-group-box>.stackpanel[style*="flex-direction:row"] {
     flex: 1 1 auto;
@@ -448,6 +535,8 @@ textarea {
     max-height: none;
 }
 
+.wpf-group-box>.wpf-stack-panel-horizontal>.wpf-button:not([data-explicit-height="true"]),
+.wpf-group-box>.wpf-stack-panel-horizontal>.wpf-repeat-button:not([data-explicit-height="true"]),
 .wpf-group-box>.wpf-stack-panel[style*="flex-direction:row"]>.wpf-button:not([data-explicit-height="true"]),
 .wpf-group-box>.stackpanel[style*="flex-direction:row"]>.wpf-button:not([data-explicit-height="true"]),
 .wpf-group-box>.wpf-stack-panel[style*="flex-direction:row"]>.wpf-repeat-button:not([data-explicit-height="true"]),
@@ -539,6 +628,30 @@ textarea {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
+.wpf-list-box {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 2px;
+    overflow: visible;
+    background: #fff;
+    border: 1px solid #abadb3;
+}
+
+.wpf-list-box-item {
+    display: flex;
+    align-items: stretch;
+    min-width: 0;
+    min-height: 0;
+}
+
+.wpf-list-box-item>.wpf-radio-button {
+    width: 100%;
+}
+
 .wpf-menu {
     display: flex;
     min-height: 24px;
@@ -550,6 +663,7 @@ textarea {
 }
 
 .wpf-check-box,
+.wpf-radio-button,
 .wpf-label,
 .wpf-access-text {
     display: inline-flex;
@@ -559,7 +673,7 @@ textarea {
 }
 
 .wpf-check-box-input,
-.wpf-radio-button {
+.wpf-radio-button-input {
     width: 13px;
     height: 13px;
     margin: 0 4px 0 0;
@@ -571,8 +685,57 @@ textarea {
     border-color: black;
 }
 
+.wpf-radio-button {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    gap: 0;
+    cursor: default;
+}
+
+.wpf-radio-button-input {
+    position: absolute;
+    width: 0;
+    height: 0;
+    margin: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.wpf-radio-button.wpf-checked {
+    background-color: #3c4c55;
+}
+
+.wpf-radio-button>.wpf-stack-panel-horizontal,
+.wpf-radio-button>.wpf-stack-panel[style*="flex-direction:row"],
+.wpf-radio-button>.stackpanel[style*="flex-direction:row"] {
+    width: 100%;
+    max-width: none;
+}
+
+.wpf-rectangle {
+    display: block;
+    flex: 0 0 auto;
+    min-width: 0;
+    min-height: 0;
+}
+
+.wpf-uniform-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--wpf-uniform-columns, 1), minmax(0, 1fr));
+    grid-auto-rows: minmax(0, 1fr);
+    align-items: stretch;
+    justify-items: stretch;
+    min-width: 0;
+    min-height: 0;
+}
+
+.wpf-uniform-grid>.wpf-border {
+    width: auto;
+    height: auto;
+}
+
 .wpf-combo-box,
-.wpf-list-box,
 .wpf-text-box,
 .wpf-password-box,
 .wpf-calendar,
@@ -587,13 +750,8 @@ textarea {
     line-height: 1.2;
 }
 
-.wpf-combo-box,
-.wpf-list-box {
+.wpf-combo-box {
     min-width: 120px;
-}
-
-.wpf-list-box {
-    min-height: 72px;
 }
 
 .wpf-text-box,
@@ -656,8 +814,8 @@ textarea {
 .wpf-text-block,
 .text-block {
     display: block;
-    min-height: 16px;
-    line-height: 16px;
+    min-height: 0;
+    line-height: 1.2;
     color: inherit;
     white-space: normal;
 }
@@ -721,4 +879,21 @@ textarea {
 
 .wpf-unknown {
     display: block;
+}
+
+.wpf-grid-cell>.wpf-button:not([data-explicit-width="true"]):not([data-wpf-horizontal-alignment="left"]):not([data-wpf-horizontal-alignment="center"]):not([data-wpf-horizontal-alignment="right"]),
+.td>.wpf-button:not([data-explicit-width="true"]):not([data-wpf-horizontal-alignment="left"]):not([data-wpf-horizontal-alignment="center"]):not([data-wpf-horizontal-alignment="right"]),
+.wpf-grid-cell>.wpf-repeat-button:not([data-explicit-width="true"]):not([data-wpf-horizontal-alignment="left"]):not([data-wpf-horizontal-alignment="center"]):not([data-wpf-horizontal-alignment="right"]),
+.td>.wpf-repeat-button:not([data-explicit-width="true"]):not([data-wpf-horizontal-alignment="left"]):not([data-wpf-horizontal-alignment="center"]):not([data-wpf-horizontal-alignment="right"]) {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+}
+
+.wpf-grid-cell>.wpf-button:not([data-explicit-height="true"]):not([data-wpf-vertical-alignment="top"]):not([data-wpf-vertical-alignment="center"]):not([data-wpf-vertical-alignment="bottom"]),
+.td>.wpf-button:not([data-explicit-height="true"]):not([data-wpf-vertical-alignment="top"]):not([data-wpf-vertical-alignment="center"]):not([data-wpf-vertical-alignment="bottom"]),
+.wpf-grid-cell>.wpf-repeat-button:not([data-explicit-height="true"]):not([data-wpf-vertical-alignment="top"]):not([data-wpf-vertical-alignment="center"]):not([data-wpf-vertical-alignment="bottom"]),
+.td>.wpf-repeat-button:not([data-explicit-height="true"]):not([data-wpf-vertical-alignment="top"]):not([data-wpf-vertical-alignment="center"]):not([data-wpf-vertical-alignment="bottom"]) {
+    align-self: stretch;
+    height: auto;
 }

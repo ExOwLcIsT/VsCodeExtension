@@ -2,9 +2,20 @@ import { Param } from "./Param";
 
 export class Style {
   selector: string;
+  key?: string;
+  targetType?: string;
+  basedOn?: string;
   properties: Param[] = [];
-  constructor(selector: string) {
+  constructor(
+    selector: string,
+    key?: string,
+    targetType?: string,
+    basedOn?: string,
+  ) {
     this.selector = selector;
+    this.key = key;
+    this.targetType = targetType;
+    this.basedOn = basedOn;
   }
 
   addSetter(property: string, value: string): void {
@@ -12,12 +23,28 @@ export class Style {
     this.properties.push(new Param(propertyName, value));
   }
 
-  toString() {
-    if (this.properties.length === 0) {
+  resolve(allStyles: Style[], seen: Set<Style> = new Set()): Param[] {
+    if (!this.basedOn || seen.has(this)) {
+      return this.properties;
+    }
+
+    seen.add(this);
+    const parent = allStyles.find((style) => style.key === this.basedOn);
+    if (!parent) {
+      return this.properties;
+    }
+
+    return [...parent.resolve(allStyles, seen), ...this.properties];
+  }
+
+  toString(allStyles: Style[] = [this]) {
+    const properties = this.resolve(allStyles);
+
+    if (properties.length === 0) {
       return "";
     }
 
-    return `${this.selector} {\n${this.properties
+    return `${this.selector} {\n${properties
       .map((property) => `  ${property.show()}`)
       .join("\n")}\n}\n`;
   }
@@ -26,13 +53,14 @@ export class Style {
     const attributes = parseAttributes(tag);
     const targetType = attributes.TargetType;
     const key = attributes["x:Key"] ?? attributes.Key;
+    const basedOn = getStyleResourceKey(attributes.BasedOn);
     const selector = key
       ? `.${styleKeyToClassName(key)}`
       : targetType
         ? targetTypeToSelector(targetType)
         : ".wpf-unknown";
 
-    return new Style(selector);
+    return new Style(selector, key, targetType, basedOn);
   }
 
   static parseSetter(tag: string): Param | undefined {
@@ -47,6 +75,11 @@ export class Style {
     const propertyName = property.split(".").at(-1) ?? property;
     return new Param(propertyName, value);
   }
+}
+
+function getStyleResourceKey(value: string | undefined): string | undefined {
+  const match = value?.match(/^\{(?:StaticResource|DynamicResource)\s+([^}]+)\}$/);
+  return match?.[1].trim();
 }
 
 function parseAttributes(tag: string): Record<string, string> {
