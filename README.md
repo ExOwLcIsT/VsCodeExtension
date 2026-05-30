@@ -1,6 +1,6 @@
-# winforms-cs README
+# xamlRenderer README
 
-This is the README for your extension "winforms-cs". After writing up a brief description, we recommend including the following sections.
+This is the README for your extension "xamlRenderer". After writing up a brief description, we recommend including the following sections.
 
 ## Features
 

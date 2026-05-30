@@ -1,5 +1,5 @@
 {
-  "name": "winforms-cs",
+  "name": "xaml-renderer",
   "displayName": "WinForms C#",
   "description": "real-time winform designer",
   "version": "0.0.1",
@@ -25,7 +25,7 @@
     ],
     "commands": [
       {
-        "command": "winforms-cs.render",
+        "command": "xamlRenderer.render",
         "title": "Render",
         "icon": "$(window)"
       }
@@ -33,7 +33,7 @@
     "menus": {
       "editor/title": [
         {
-          "command": "winforms-cs.render",
+          "command": "xamlRenderer.render",
           "group": "navigation",
           "when": "resourceExtname == .xaml"
         }
